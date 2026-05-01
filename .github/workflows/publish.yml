@@ -1,4 +1,4 @@
-name: Publish SDKs
+name: Publish SDKs & Crates
 
 on:
   release:
@@ -70,6 +70,8 @@ jobs:
 
   # ──────────────────────────────────────────────
   # Publish Rust crates to crates.io
+  # Order: remem-core → remem-mcp → remem-api → remem-cli
+  # (respects dependency graph)
   # ──────────────────────────────────────────────
   rust:
     name: Publish Rust Crates
@@ -82,7 +84,21 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: cargo publish -p remem-core --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
 
-      - name: Wait for crates.io index
+      - name: Wait for crates.io index (core)
+        run: sleep 30
+
+      - name: Publish remem-mcp
+        if: ${{ !inputs.dry_run }}
+        run: cargo publish -p remem-mcp --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index (mcp)
+        run: sleep 30
+
+      - name: Publish remem-api
+        if: ${{ !inputs.dry_run }}
+        run: cargo publish -p remem-api --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for crates.io index (api)
         run: sleep 30
 
       - name: Publish remem-cli

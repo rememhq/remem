@@ -1,0 +1,83 @@
+name: Python SDK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sdk/python/**"
+      - ".github/workflows/sdk-python.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "sdk/python/**"
+      - ".github/workflows/sdk-python.yml"
+
+concurrency:
+  group: sdk-python-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Lint
+  # ──────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Check formatting
+        working-directory: sdk/python
+        run: ruff format --check .
+
+      - name: Lint
+        working-directory: sdk/python
+        run: ruff check .
+
+  # ──────────────────────────────────────────────
+  # Test (multi-version)
+  # ──────────────────────────────────────────────
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        working-directory: sdk/python
+        run: pip install -e ".[dev]"
+
+      - name: Test
+        working-directory: sdk/python
+        run: pytest tests/ -v --tb=short
+
+  # ──────────────────────────────────────────────
+  # Gate
+  # ──────────────────────────────────────────────
+  python-pass:
+    name: Python SDK Pass
+    if: always()
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate
+        run: |
+          if [[ "${{ needs.lint.result }}" == "failure" || \
+                "${{ needs.test.result }}" == "failure" ]]; then
+            echo "❌ Python SDK checks failed"
+            exit 1
+          fi
+          echo "✅ Python SDK checks passed"

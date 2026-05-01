@@ -3,7 +3,7 @@
 # ========================
 /target/
 **/*.rs.bk
-Cargo.lock
+# Note: Cargo.lock is tracked intentionally — this workspace produces binary crates
 
 # ========================
 # C++ (libremem — v0.2+)

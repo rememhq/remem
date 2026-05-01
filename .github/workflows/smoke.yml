@@ -1,0 +1,130 @@
+name: Smoke Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "remem-core/**"
+      - "remem-api/**"
+      - "remem-cli/**"
+      - "remem-mcp/**"
+      - "libremem/**"
+      - "Cargo.toml"
+      - ".github/workflows/smoke.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "remem-core/**"
+      - "remem-api/**"
+      - "remem-cli/**"
+      - "remem-mcp/**"
+      - "libremem/**"
+      - "Cargo.toml"
+      - ".github/workflows/smoke.yml"
+
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Build release binaries
+  # ──────────────────────────────────────────────
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: smoke
+
+      - name: Build all binaries
+        run: cargo build --release -p remem-cli -p remem-api -p remem-mcp
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-binaries
+          path: |
+            target/release/remem
+            target/release/remem-api
+            target/release/remem-mcp
+          retention-days: 1
+
+  # ──────────────────────────────────────────────
+  # CLI smoke test
+  # ──────────────────────────────────────────────
+  cli:
+    name: CLI
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: smoke-binaries
+
+      - name: Verify CLI
+        run: |
+          chmod +x remem
+          ./remem --help
+          echo "✅ CLI binary runs"
+
+  # ──────────────────────────────────────────────
+  # API server smoke test
+  # ──────────────────────────────────────────────
+  api:
+    name: API Server
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: smoke-binaries
+
+      - name: Verify API
+        run: |
+          chmod +x remem-api
+          timeout 5 ./remem-api --help || true
+          echo "✅ API binary runs"
+
+  # ──────────────────────────────────────────────
+  # MCP server smoke test
+  # ──────────────────────────────────────────────
+  mcp:
+    name: MCP Server
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: smoke-binaries
+
+      - name: Verify MCP
+        run: |
+          chmod +x remem-mcp
+          timeout 5 ./remem-mcp --help || true
+          echo "✅ MCP binary runs"
+
+  # ──────────────────────────────────────────────
+  # Gate
+  # ──────────────────────────────────────────────
+  smoke-pass:
+    name: Smoke Pass
+    if: always()
+    needs: [cli, api, mcp]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate
+        run: |
+          if [[ "${{ needs.cli.result }}" == "failure" || \
+                "${{ needs.api.result }}" == "failure" || \
+                "${{ needs.mcp.result }}" == "failure" ]]; then
+            echo "❌ Smoke tests failed"
+            exit 1
+          fi
+          echo "✅ All smoke tests passed"

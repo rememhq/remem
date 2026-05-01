@@ -1,0 +1,115 @@
+name: Rust
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "remem-core/**"
+      - "remem-api/**"
+      - "remem-cli/**"
+      - "remem-mcp/**"
+      - "libremem/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "remem-core/**"
+      - "remem-api/**"
+      - "remem-cli/**"
+      - "remem-mcp/**"
+      - "libremem/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/rust.yml"
+
+concurrency:
+  group: rust-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-Dwarnings"
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Lint — format, clippy, docs
+  # ──────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets
+
+      - name: Documentation
+        run: cargo doc --workspace --no-deps
+        env:
+          RUSTDOCFLAGS: "-Dwarnings"
+
+  # ──────────────────────────────────────────────
+  # Build + test (cross-platform, includes C++)
+  # ──────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.os }})
+    needs: lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}
+
+      - name: Build workspace (includes C++ via build.rs)
+        run: cargo build --workspace --release
+
+      - name: Run tests
+        run: cargo test --workspace
+
+  # ──────────────────────────────────────────────
+  # Cargo deny — license + advisory compliance
+  # ──────────────────────────────────────────────
+  deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories licenses sources
+
+  # ──────────────────────────────────────────────
+  # Gate
+  # ──────────────────────────────────────────────
+  rust-pass:
+    name: Rust Pass
+    if: always()
+    needs: [lint, build, deny]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate
+        run: |
+          if [[ "${{ needs.lint.result }}" == "failure" || \
+                "${{ needs.build.result }}" == "failure" || \
+                "${{ needs.deny.result }}" == "failure" ]]; then
+            echo "❌ Rust checks failed"
+            exit 1
+          fi
+          echo "✅ Rust checks passed"
