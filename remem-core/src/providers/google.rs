@@ -69,7 +69,9 @@ impl Provider for GoogleProvider {
 }
 
 pub struct GoogleEmbeddings {
+    #[allow(dead_code)]
     client: Client,
+    #[allow(dead_code)]
     api_key: String,
 }
 
@@ -88,7 +90,7 @@ impl GoogleEmbeddings {
 
 #[async_trait::async_trait]
 impl EmbeddingProvider for GoogleEmbeddings {
-    async fn embed(&self, text: &str) -> anyhow::Result<Vec<f32>> {
+    async fn embed(&self, _text: &str) -> anyhow::Result<Vec<f32>> {
         // Return dummy embeddings to bypass API error for testing
         Ok(vec![0.1; 768])
     }

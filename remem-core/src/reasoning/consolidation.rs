@@ -58,6 +58,16 @@ pub async fn consolidate_session(
         super::contradiction::detect_contradictions(provider, &facts, &existing_memories, model)
             .await?;
 
+    // Auto-resolve contradictions by archiving the old superseded memories
+    for c in &contradictions {
+        tracing::info!(
+            old_memory_id = %c.existing_memory_id,
+            explanation = %c.explanation,
+            "Auto-resolving contradiction by archiving superseded memory"
+        );
+        let _ = store.archive(c.existing_memory_id).await;
+    }
+
     // Step 3: Store new facts
     let mut new_count = 0;
     let mut updated_count = 0;
@@ -103,6 +113,8 @@ pub async fn consolidate_session(
         // Extract knowledge graph triples
         if let Some(triple) = &fact.knowledge_triple {
             kg_updates.push(triple.clone());
+            // Persist the triple to the SQLite knowledge_graph table
+            let _ = store.insert_knowledge_triple(triple, record.id).await;
         }
     }
 

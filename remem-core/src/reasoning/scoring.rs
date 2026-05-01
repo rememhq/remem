@@ -41,7 +41,7 @@ Respond with ONLY a single number between 1 and 10, nothing else."#
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // unused import removed
 
     // Unit test with a mock provider would go here
     // Integration tests with real APIs go in the evals/ directory

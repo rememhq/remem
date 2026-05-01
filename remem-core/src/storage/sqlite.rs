@@ -1,6 +1,6 @@
 //! SQLite storage backend with WAL mode and FTS5 full-text search.
 
-use crate::memory::types::{MemoryRecord, MemoryType};
+use crate::memory::types::{KnowledgeGraphUpdate, MemoryRecord, MemoryType};
 use crate::storage::{MemoryStore, StoreStats};
 use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection};
@@ -229,6 +229,26 @@ impl MemoryStore for SqliteStore {
         let conn = self.conn.lock().await;
         let rows = conn.execute("DELETE FROM memories WHERE id = ?1", params![id.to_string()])?;
         Ok(rows > 0)
+    }
+
+    async fn insert_knowledge_triple(
+        &self,
+        triple: &KnowledgeGraphUpdate,
+        memory_id: Uuid,
+    ) -> anyhow::Result<()> {
+        let conn = self.conn.lock().await;
+        conn.execute(
+            "INSERT OR IGNORE INTO knowledge_graph (subject, predicate, object, memory_id, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![
+                triple.subject,
+                triple.predicate,
+                triple.object,
+                memory_id.to_string(),
+                Utc::now().to_rfc3339(),
+            ],
+        )?;
+        Ok(())
     }
 
     async fn search_fts(&self, query: &str, limit: usize) -> anyhow::Result<Vec<MemoryRecord>> {

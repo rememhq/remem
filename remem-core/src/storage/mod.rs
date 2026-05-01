@@ -3,7 +3,7 @@
 pub mod sqlite;
 pub mod vector;
 
-use crate::memory::types::{MemoryRecord, MemoryType};
+use crate::memory::types::{KnowledgeGraphUpdate, MemoryRecord, MemoryType};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -25,6 +25,13 @@ pub trait MemoryStore: Send + Sync {
 
     /// Delete a memory by ID.
     async fn delete(&self, id: Uuid) -> anyhow::Result<bool>;
+
+    /// Insert a knowledge graph triple extracted from a memory.
+    async fn insert_knowledge_triple(
+        &self,
+        triple: &KnowledgeGraphUpdate,
+        memory_id: Uuid,
+    ) -> anyhow::Result<()>;
 
     /// Full-text search using SQLite FTS5.
     async fn search_fts(&self, query: &str, limit: usize) -> anyhow::Result<Vec<MemoryRecord>>;
