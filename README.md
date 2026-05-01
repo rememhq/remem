@@ -1,12 +1,12 @@
-# remem
-
-**The reasoning memory layer for AI agents.**
-
-<p align="left">
-  <a href="https://github.com/rememhq/remem/actions"><img src="https://github.com/rememhq/remem/workflows/CI/badge.svg" alt="CI Status" /></a>
-  <a href="https://github.com/rememhq/remem/releases"><img src="https://img.shields.io/github/v/release/rememhq/remem" alt="Release" /></a>
-  <a href="https://apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License" /></a>
-</p>
+<div align="center">
+  <h1>remem</h1>
+  <p><strong>The reasoning memory layer for AI agents.</strong></p>
+  <p>
+    <a href="https://github.com/rememhq/remem/actions"><img src="https://github.com/rememhq/remem/workflows/CI/badge.svg" alt="CI Status" /></a>
+    <a href="https://github.com/rememhq/remem/releases"><img src="https://img.shields.io/github/v/release/rememhq/remem" alt="Release" /></a>
+    <a href="https://apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License" /></a>
+  </p>
+</div>
 
 ---
 
