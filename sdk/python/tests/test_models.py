@@ -1,5 +1,7 @@
 """Unit tests for remem SDK Pydantic models."""
-from remem.models import MemoryType, MemoryRecord, RecallResult
+import uuid
+from datetime import datetime
+from remem.models import MemoryType, MemoryResult
 
 
 class TestMemoryType:
@@ -16,68 +18,56 @@ class TestMemoryType:
         assert MemoryType.DECISION == "decision"
 
 
-class TestMemoryRecord:
+class TestMemoryResult:
     def test_create_minimal(self):
-        record = MemoryRecord(
-            id="00000000-0000-0000-0000-000000000001",
+        result = MemoryResult(
+            id=uuid.uuid4(),
             content="test content",
             importance=5.0,
             tags=[],
             memory_type=MemoryType.FACT,
-            created_at="2026-01-01T00:00:00Z",
+            created_at=datetime.utcnow(),
         )
-        assert record.content == "test content"
-        assert record.importance == 5.0
+        assert result.content == "test content"
+        assert result.importance == 5.0
+        assert result.similarity == 0.0
+        assert result.reasoning is None
 
     def test_create_with_tags(self):
-        record = MemoryRecord(
-            id="00000000-0000-0000-0000-000000000001",
+        result = MemoryResult(
+            id=uuid.uuid4(),
             content="tagged",
             importance=5.0,
             tags=["a", "b"],
             memory_type=MemoryType.FACT,
-            created_at="2026-01-01T00:00:00Z",
+            created_at=datetime.utcnow(),
         )
-        assert len(record.tags) == 2
-        assert "a" in record.tags
+        assert len(result.tags) == 2
+        assert "a" in result.tags
 
     def test_serialization(self):
-        record = MemoryRecord(
-            id="00000000-0000-0000-0000-000000000001",
+        result = MemoryResult(
+            id=uuid.uuid4(),
             content="test",
             importance=5.0,
             tags=[],
             memory_type=MemoryType.FACT,
-            created_at="2026-01-01T00:00:00Z",
+            created_at=datetime.utcnow(),
         )
-        data = record.model_dump()
+        data = result.model_dump()
         assert "content" in data
         assert "importance" in data
-
-
-class TestRecallResult:
-    def test_create(self):
-        result = RecallResult(
-            id="00000000-0000-0000-0000-000000000001",
-            content="recalled content",
-            importance=7.0,
-            tags=["test"],
-            memory_type=MemoryType.FACT,
-            created_at="2026-01-01T00:00:00Z",
-            similarity=0.92,
-            reasoning="Relevant match",
-        )
-        assert result.similarity == 0.92
-        assert result.reasoning == "Relevant match"
+        assert "similarity" in data
 
     def test_optional_reasoning(self):
-        result = RecallResult(
-            id="00000000-0000-0000-0000-000000000001",
+        result = MemoryResult(
+            id=uuid.uuid4(),
             content="no reasoning",
             importance=5.0,
             tags=[],
             memory_type=MemoryType.FACT,
-            created_at="2026-01-01T00:00:00Z",
+            created_at=datetime.utcnow(),
             similarity=0.5,
+            reasoning="because",
         )
-        assert result.reasoning is None
+        assert result.reasoning == "because"

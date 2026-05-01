@@ -13,6 +13,7 @@ use chrono::{DateTime, Utc};
 
 
 /// Perform guided retrieval: vector search → LLM re-ranking → reasoning traces.
+#[allow(clippy::too_many_arguments)]
 pub async fn guided_retrieval(
     provider: &dyn Provider,
     embeddings: &dyn EmbeddingProvider,
@@ -75,6 +76,7 @@ pub async fn guided_retrieval(
 }
 
 /// Use the LLM to re-rank candidate memories and provide reasoning.
+#[allow(clippy::too_many_arguments)]
 async fn llm_rerank(
     provider: &dyn Provider,
     query: &str,

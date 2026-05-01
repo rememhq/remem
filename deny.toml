@@ -23,6 +23,9 @@ allow = [
     "OpenSSL",
     "BSL-1.0",
     "CC0-1.0",
+    "MPL-2.0",
+    "0BSD",
+    "Unlicense"
 ]
 copyleft = "deny"
 

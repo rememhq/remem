@@ -397,10 +397,8 @@ impl MemoryStore for SqliteStore {
         let rows = stmt.query_map([], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
         })?;
-        for row in rows {
-            if let Ok((k, v)) = row {
-                by_type.insert(k, v);
-            }
+        for (k, v) in rows.flatten() {
+            by_type.insert(k, v);
         }
 
         Ok(StoreStats {

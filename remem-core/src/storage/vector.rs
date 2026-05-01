@@ -46,6 +46,9 @@ pub trait VectorIndex: Send + Sync {
     async fn remove(&self, id: Uuid) -> anyhow::Result<()>;
     async fn search(&self, query: &[f32], k: usize) -> anyhow::Result<Vec<VectorResult>>;
     fn len(&self) -> usize;
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
     async fn save(&self, path: &Path) -> anyhow::Result<()>;
     async fn load(&self, path: &Path) -> anyhow::Result<()>;
 }
@@ -126,7 +129,12 @@ impl VectorIndex for HNSWVectorIndex {
     }
 
     fn len(&self) -> usize {
-        unsafe { remem_ffi::remem_index_size(self.handle) }
+        let size = unsafe { remem_ffi::remem_index_size(self.handle) };
+        size as usize
+    }
+
+    fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     async fn save(&self, path: &Path) -> anyhow::Result<()> {
