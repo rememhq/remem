@@ -9,6 +9,7 @@ class TestMemoryClient:
     def test_import(self):
         """Verify the SDK can be imported."""
         from remem import Memory, MemoryResult, StoreResponse
+
         assert Memory is not None
         assert MemoryResult is not None
         assert StoreResponse is not None

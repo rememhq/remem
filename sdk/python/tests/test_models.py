@@ -1,4 +1,5 @@
 """Unit tests for remem SDK Pydantic models."""
+
 import uuid
 from datetime import datetime
 from remem.models import MemoryType, MemoryResult
