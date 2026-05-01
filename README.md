@@ -1,53 +1,93 @@
 # remem
 
-> **⚠️ Active Development — remem is under active development. APIs may change. Not yet recommended for production use.**
-
-**Reasoning memory layer for AI agents and models.**
-
-remem gives agents persistent, reasoned memory across sessions. Unlike simple vector stores, remem uses cloud LLMs (Claude, GPT-4o, Gemini) or local models to *reason* about what to remember, how to consolidate past interactions into durable facts, and what context is actually relevant to surface — not just what is semantically similar.
-
-```
-agent calls mem_recall("how does this codebase handle auth?")
-  → HNSW retrieves 50 candidates
-  → Claude reasons over candidates: "Memory #3 is most relevant because..."
-  → returns 8 high-signal memories with reasoning trace
-  → agent has grounded, non-hallucinated context
-```
+<div align="center">
+  <img src="https://raw.githubusercontent.com/rememhq/remem/main/assets/logo.png" alt="remem logo" width="200" />
+  <p><strong>The reasoning memory layer for AI agents.</strong></p>
+  <p>
+    <a href="https://github.com/rememhq/remem/actions"><img src="https://github.com/rememhq/remem/workflows/CI/badge.svg" alt="CI Status" /></a>
+    <a href="https://github.com/rememhq/remem/releases"><img src="https://img.shields.io/github/v/release/rememhq/remem" alt="Release" /></a>
+    <a href="https://apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License" /></a>
+  </p>
+</div>
 
 ---
 
-## Why remem
+> **⚠️ Active Development** — remem is evolving rapidly. APIs are subject to change. Not yet recommended for mission-critical production workloads.
 
-Most agent memory systems are vector stores with a thin API. They return whatever is nearest in embedding space, which produces confident recall of irrelevant context. remem adds a reasoning step at every key operation:
+remem provides agents with **persistent, reasoned memory** that spans across sessions. Unlike traditional vector stores that rely solely on semantic similarity, remem incorporates an LLM reasoning step at every stage of the memory lifecycle: from initial importance scoring and guided retrieval to session-wide consolidation and contradiction detection.
 
-| Operation | Naive vector store | remem |
-|---|---|---|
-| Store | embed + insert | embed + insert + LLM importance scoring |
-| Recall | top-k by cosine | top-50 by cosine → LLM re-ranks → top-8 with reasoning |
-| Consolidate | — | LLM extracts durable facts from raw session log |
-| Detect contradictions | — | LLM flags conflicts with existing memories |
-| Decay | — | Importance-weighted decay; LLM-rated facts persist longer |
+## 🏗️ Layer Diagram
 
----
+```mermaid
+graph TD
+    subgraph Consumers
+        CC[Claude Code]
+        CR[Cursor]
+        PY[Python Agents]
+        TS[TS Agents]
+    end
 
-## Quickstart
+    subgraph Interface ["Interface Layer (Rust)"]
+        MCP[remem-mcp (stdio)]
+        API[remem-api (REST)]
+        SDK_PY[Python SDK]
+        SDK_TS[TS SDK]
+    end
 
-### MCP — Claude Code / Cursor
+    subgraph Core ["Reasoning Engine (remem-core)"]
+        CONS[Consolidation]
+        RETR[Guided Retrieval]
+        CONT[Contradiction Detection]
+        SCORE[Importance Scoring]
+        KG[Knowledge Graph Engine]
+    end
 
-Add to your MCP config:
+    subgraph Models ["Models & Providers"]
+        CLD[Anthropic Claude]
+        GPT[OpenAI GPT-4o]
+        GEM[Google Gemini]
+        ONNX[Local ONNX / libremem]
+    end
+
+    subgraph Storage ["Storage Layer"]
+        SQL[SQLite + WAL]
+        HNSW[HNSW Vector Index]
+    end
+
+    Consumers --> Interface
+    Interface --> Core
+    Core --> Models
+    Core --> Storage
+```
+
+## 🧠 Why remem?
+
+Traditional vector stores often suffer from "confident recall of irrelevant context." They return what is semantically *nearest*, not what is actually *useful*. remem bridges this gap with reasoning.
+
+| Feature | Naive Vector Store | remem |
+| :--- | :--- | :--- |
+| **Store** | `embed` + `insert` | `embed` + `insert` + **LLM Importance Scoring** |
+| **Recall** | top-k by cosine similarity | top-50 cosine → **LLM Re-ranking** → top-8 with **Reasoning Trace** |
+| **Consolidation** | — | **LLM Fact Extraction** from raw interaction logs |
+| **Contradictions** | — | **LLM Conflict Detection** between old and new facts |
+| **Decay** | Time-based (linear) | **Importance-Weighted Decay**; critical facts persist longer |
+
+## 🚀 Quickstart
+
+### Model Context Protocol (MCP) — Claude Code / Cursor
+
+remem is designed to work seamlessly with MCP-compliant environments. Add the following to your configuration:
 
 ```json
 {
   "mcpServers": {
     "remem": {
       "command": "remem",
-      "args": ["mcp", "--project", "my-agent"]
+      "args": ["mcp", "--project", "my-project"]
     }
   }
 }
 ```
-
-remem exposes 6 tools: `mem_store`, `mem_recall`, `mem_search`, `mem_update`, `mem_forget`, `mem_consolidate`.
 
 ### Python SDK
 
@@ -60,10 +100,14 @@ from remem import Memory
 
 m = Memory(project="my-agent", reasoning_model="claude-sonnet-4-5")
 
-await m.store("Production DB is PostgreSQL 15 on RDS", tags=["infra"])
-results = await m.recall("what database are we using?", limit=5)
+# Store a durable preference
+await m.store("The production database is PostgreSQL 15 on RDS", tags=["infra"])
+
+# Recall with reasoning
+results = await m.recall("what database are we using?")
 for r in results:
-    print(r.content, r.importance, r.reasoning)
+    print(f"Content: {r.content}")
+    print(f"Reasoning: {r.reasoning}")
 ```
 
 ### TypeScript SDK
@@ -76,117 +120,40 @@ npm install @remem/sdk
 import { Memory } from "@remem/sdk";
 
 const m = new Memory({ project: "my-agent", reasoningModel: "gpt-4o" });
-await m.store("This repo uses trunk-based development", { tags: ["git"] });
-const ctx = await m.recall("how does this team manage branches?");
+await m.store("This repository uses trunk-based development", { tags: ["workflow"] });
+
+const results = await m.recall("how do we manage branches?");
 ```
 
-### CLI
+## ⚙️ How it Works
 
-```bash
-remem store "API rate limit is 1000 req/min" --tags api,limits --importance 8
-remem recall "rate limits"
-remem inspect
-```
+1.  **Guided Retrieval**: When you query remem, it first retrieves the top 50 candidates using cosine similarity on the vector index. These candidates are then passed to an LLM (e.g., Claude 3.5 Sonnet) which filters and re-ranks them, returning the top ~8 most relevant memories accompanied by a "reasoning trace" explaining why they were chosen.
+2.  **Session Consolidation**: At the end of a session, remem can ingest the entire interaction log. An LLM extracts durable, high-signal facts, scores their importance, and identifies relationships between them.
+3.  **Knowledge Graph & Contradiction Detection**: Facts are stored as structured nodes and edges (triples) in a knowledge graph. When new information is added that conflicts with existing knowledge, remem flags the contradiction, allowing the agent to clarify or archive the stale memory.
+4.  **Local First (v0.2+)**: Using `libremem`, a custom C++ engine, remem supports local HNSW indexing and BERT-compatible tokenization for privacy-first, offline embedding generation.
 
----
+## 🛠️ Tech Stack
 
-## Installation
+- **Rust**: Core reasoning engine, REST API (Axum), and MCP server.
+- **C++17**: High-performance vector index (HNSW) and ONNX embedding engine (`libremem`).
+- **SQLite**: Reliable metadata storage with WAL mode for high concurrency.
+- **Python & TypeScript**: Modern, type-safe SDKs for rapid integration.
 
-```bash
-# From source
-git clone https://github.com/rememhq/remem
-cd remem
-cargo build --release
+## 🗺️ Roadmap
 
-# CLI
-cargo install --path remem-cli
+- [x] **v0.1** — MCP support, REST API, Python/TS SDKs, basic consolidation.
+- [ ] **v0.2** — Knowledge Graph queries, Contradiction Detection, Gemini provider, C++ Tokenizer integration.
+- [ ] **v0.3** — Swift/Kotlin bindings, Local LLM reasoning support (llama.cpp).
+- [ ] **v0.4** — Shared memory namespaces, access control, and team collaboration features.
 
-# Python SDK
-pip install remem
+## 🤝 Contributing
 
-# TypeScript SDK
-npm install @remem/sdk
-```
+We welcome contributions! Whether you're fixing a bug, improving the reasoning prompts, or adding a new provider, please check out our [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
+1.  Clone the repo: `git clone https://github.com/rememhq/remem`
+2.  Build: `cargo build`
+3.  Test: `cargo test --workspace`
 
-## Configuration
+## 📄 License
 
-```toml
-# .remem/config.toml
-[reasoning]
-provider = "anthropic"
-reasoning_model = "claude-sonnet-4-5"
-scoring_model = "claude-haiku-4-5"
-
-[storage]
-data_dir = "~/.remem/projects"
-
-[server]
-port = 7474
-```
-
-Environment variables: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `REMEM_PROVIDER`, `REMEM_DATA_DIR`.
-
----
-
-## Architecture
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full system design.
-
-```
-Agent consumers → Interface layer (MCP + REST + SDKs)
-                → Reasoning engine (consolidation, retrieval, scoring)
-                → Cloud/local models (Claude, GPT-4o, Gemini, phi-3)
-                → Memory storage (SQLite + WAL, vector index)
-```
-
----
-
-## Roadmap
-
-- [x] **v0.1** — MCP server, REST API, Python + TypeScript SDKs, Claude + OpenAI providers, basic consolidation
-- [ ] **v0.2** — Knowledge graph queries, contradiction detection, procedural memory, Gemini provider, C++ ONNX embeddings
-- [ ] **v0.3** — Swift + Kotlin bindings, Flutter + React Native adapters, local LLM reasoning
-- [ ] **v0.4** — Multi-agent shared memory namespaces, memory access control, team deployments
-- [ ] **v1.0** — Stable API, full eval suite, all platform bindings complete
-
----
-
-## Docker
-
-```bash
-# Pull from GHCR
-docker pull ghcr.io/rememhq/remem:latest
-
-# Run the REST API
-docker run -p 7474:7474 \
-  -e ANTHROPIC_API_KEY=sk-ant-... \
-  -e REMEM_API_KEY=my-secret \
-  -v remem-data:/home/remem/.remem \
-  ghcr.io/rememhq/remem:latest
-
-# Build locally
-docker build -t remem .
-```
-
----
-
-## Contributing
-
-We welcome contributions across all layers! Please read:
-
-- [CONTRIBUTING.md](CONTRIBUTING.md) — development setup, coding standards, PR process
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community guidelines
-- [SECURITY.md](SECURITY.md) — vulnerability reporting
-
-```bash
-cargo test --workspace       # Rust tests
-cd sdk/python && pytest      # Python SDK tests
-```
-
-Please open an issue before starting large changes.
-
-## License
-
-Apache 2.0 — see [LICENSE](LICENSE).
+remem is licensed under the **Apache License 2.0**. See [LICENSE](LICENSE) for details.
