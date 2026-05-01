@@ -3,8 +3,8 @@
 //! Commands:
 //! - remem serve          — start the REST API server
 //! - remem mcp            — start the MCP server (stdio)
-//! - remem store <text>   — store a memory
-//! - remem recall <query> — recall memories
+//! - remem store `<text>`   — store a memory
+//! - remem recall `<query>` — recall memories
 //! - remem inspect        — show database statistics
 
 use clap::{Parser, Subcommand};
