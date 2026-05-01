@@ -1,0 +1,79 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run weekly on Monday at 06:00 UTC
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Cargo audit — known vulnerability scan
+  # ──────────────────────────────────────────────
+  cargo-audit:
+    name: Cargo Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  # ──────────────────────────────────────────────
+  # Cargo deny — license + advisory checks
+  # ──────────────────────────────────────────────
+  cargo-deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories sources
+
+  # ──────────────────────────────────────────────
+  # CodeQL — static analysis
+  # ──────────────────────────────────────────────
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python, javascript-typescript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:python"
+
+  # ──────────────────────────────────────────────
+  # Dependency review — PR-only
+  # ──────────────────────────────────────────────
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: AGPL-3.0, GPL-3.0

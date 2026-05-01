@@ -1,0 +1,31 @@
+# CODEOWNERS — auto-assign reviewers for PRs
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @thrive-spectrexq
+
+# Core Rust crates
+/remem-core/ @thrive-spectrexq
+/remem-mcp/  @thrive-spectrexq
+/remem-api/  @thrive-spectrexq
+/remem-cli/  @thrive-spectrexq
+
+# C++ core (future)
+/libremem/ @thrive-spectrexq
+
+# SDKs
+/sdk/python/     @thrive-spectrexq
+/sdk/typescript/  @thrive-spectrexq
+/sdk/rust/        @thrive-spectrexq
+
+# Bindings (future)
+/bindings/ @thrive-spectrexq
+
+# CI/CD and infrastructure
+/.github/  @thrive-spectrexq
+/Dockerfile @thrive-spectrexq
+/.devcontainer/ @thrive-spectrexq
+
+# Documentation
+/docs/ @thrive-spectrexq
+*.md   @thrive-spectrexq

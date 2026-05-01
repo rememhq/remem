@@ -1,0 +1,67 @@
+name: Nightly
+
+on:
+  schedule:
+    # Every day at 03:00 UTC
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Full test suite on nightly Rust
+  # ──────────────────────────────────────────────
+  nightly-rust:
+    name: Rust Nightly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --workspace
+
+      - name: Test
+        run: cargo test --workspace
+
+      - name: Clippy (nightly)
+        run: cargo clippy --workspace -- -D warnings
+        continue-on-error: true
+
+  # ──────────────────────────────────────────────
+  # MSRV check — minimum supported Rust version
+  # ──────────────────────────────────────────────
+  msrv:
+    name: MSRV (1.75.0)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.75.0
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --workspace
+
+  # ──────────────────────────────────────────────
+  # Miri — undefined behavior detection
+  # ──────────────────────────────────────────────
+  miri:
+    name: Miri
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run Miri
+        run: cargo miri test -p remem-core -- --skip sqlite --skip vector
+        env:
+          MIRIFLAGS: "-Zmiri-disable-isolation"
+        continue-on-error: true

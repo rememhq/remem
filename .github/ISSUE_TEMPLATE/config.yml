@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/rememhq/remem/discussions
+    about: Ask questions, share ideas, or discuss remem
+  - name: 📖 Documentation
+    url: https://github.com/rememhq/remem/tree/main/docs
+    about: Read the architecture and provider docs
+  - name: 🔒 Security
+    url: https://github.com/rememhq/remem/security/advisories/new
+    about: Report security vulnerabilities privately

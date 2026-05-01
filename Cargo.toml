@@ -1,0 +1,68 @@
+[workspace]
+members = [
+    "remem-core",
+    "remem-mcp",
+    "remem-api",
+    "remem-cli",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/rememhq/remem"
+homepage = "https://github.com/rememhq/remem"
+authors = ["thrive-spectrexq <thrive-spectrexq@users.noreply.github.com>"]
+categories = ["science", "database"]
+keywords = ["ai", "memory", "agents", "llm", "reasoning"]
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Error handling
+anyhow = "1"
+thiserror = "2"
+
+# Logging / tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# IDs and time
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Storage
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# HTTP client (for cloud providers)
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+# Configuration
+toml = "0.8"
+dirs = "6"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Web framework (API)
+axum = "0.8"
+tower = { version = "0.5", features = ["full"] }
+tower-http = { version = "0.6", features = ["cors", "trace", "auth"] }
+utoipa = { version = "5", features = ["axum_extras"] }
+utoipa-axum = "0.2"
+
+# MCP
+rmcp = { version = "0.1", features = ["server", "transport-io"] }
+
+# Vector math
+ndarray = "0.16"
+
+# Internal crates
+remem-core = { path = "remem-core" }

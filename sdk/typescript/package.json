@@ -1,0 +1,16 @@
+{
+  "name": "@remem/sdk",
+  "version": "0.1.0",
+  "description": "Reasoning memory layer for AI agents — TypeScript SDK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js"
+  },
+  "keywords": ["ai", "memory", "agents", "llm", "reasoning"],
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "^5.5"
+  }
+}

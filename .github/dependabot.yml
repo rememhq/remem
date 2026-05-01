@@ -1,0 +1,59 @@
+version: 2
+
+updates:
+  # Rust (Cargo)
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "rust"]
+    commit-message:
+      prefix: "chore(deps):"
+    groups:
+      rust-minor:
+        update-types: ["minor", "patch"]
+
+  # Python SDK
+  - package-ecosystem: "pip"
+    directory: "/sdk/python"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "python"]
+    commit-message:
+      prefix: "chore(deps):"
+
+  # TypeScript SDK
+  - package-ecosystem: "npm"
+    directory: "/sdk/typescript"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "typescript"]
+    commit-message:
+      prefix: "chore(deps):"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "ci"]
+    commit-message:
+      prefix: "chore(ci):"
+
+  # Docker
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels: ["dependencies", "docker"]
+    commit-message:
+      prefix: "chore(docker):"

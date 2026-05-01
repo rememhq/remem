@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Build release binaries for all platforms
+  # ──────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            archive: tar.gz
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            archive: tar.gz
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            archive: tar.gz
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            archive: tar.gz
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            archive: tar.gz
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            archive: zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y musl-tools
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }} -p remem-cli -p remem-api -p remem-mcp
+
+      - name: Package (Unix)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/remem dist/ 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/remem-api dist/ 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/remem-mcp dist/ 2>/dev/null || true
+          cp README.md LICENSE dist/
+          cd dist && tar czf ../remem-${{ github.ref_name }}-${{ matrix.target }}.tar.gz *
+
+      - name: Package (Windows)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item target/${{ matrix.target }}/release/remem.exe dist/ -ErrorAction SilentlyContinue
+          Copy-Item target/${{ matrix.target }}/release/remem-api.exe dist/ -ErrorAction SilentlyContinue
+          Copy-Item target/${{ matrix.target }}/release/remem-mcp.exe dist/ -ErrorAction SilentlyContinue
+          Copy-Item README.md, LICENSE dist/
+          Compress-Archive -Path dist/* -DestinationPath remem-${{ github.ref_name }}-${{ matrix.target }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: remem-${{ matrix.target }}
+          path: remem-${{ github.ref_name }}-${{ matrix.target }}.*
+
+  # ──────────────────────────────────────────────
+  # Create GitHub Release
+  # ──────────────────────────────────────────────
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          sha256sum remem-* > checksums-sha256.txt
+          cat checksums-sha256.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/remem-*
+            artifacts/checksums-sha256.txt
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}

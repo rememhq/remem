@@ -1,0 +1,25 @@
+[project]
+name = "remem"
+version = "0.1.0"
+description = "Reasoning memory layer for AI agents — Python SDK"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.27",
+    "pydantic>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+langchain = ["langchain-core>=0.3"]
+llamaindex = ["llama-index-core>=0.11"]
+autogen = ["autogen-agentchat>=0.4"]
+crewai = ["crewai>=0.80"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
