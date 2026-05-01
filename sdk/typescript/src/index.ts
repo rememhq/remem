@@ -95,7 +95,7 @@ export class Memory {
    * Update an existing memory's content, importance, or tags.
    */
   async update(id: string, options: UpdateOptions): Promise<Record<string, unknown>> {
-    return this.request("PATCH", `/v1/memories/${id}`, options);
+    return this.request("PATCH", `/v1/memories/${id}`, options) as Promise<Record<string, unknown>>;
   }
 
   /**

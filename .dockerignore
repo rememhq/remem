@@ -7,7 +7,6 @@ evals/
 models/
 bindings/
 sdk/
-libremem/
 *.md
 !README.md
 !LICENSE
