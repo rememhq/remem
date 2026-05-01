@@ -16,46 +16,29 @@ remem provides agents with **persistent, reasoned memory** that spans across ses
 
 ## 🏗️ Architecture
 
-```mermaid
-graph TD
-    subgraph Consumers [Consumers]
-        CC[Claude Code]
-        CR[Cursor]
-        PY[Python Agents]
-        TS[TS Agents]
-    end
-
-    subgraph Interface [Interface Layer]
-        MCP[remem-mcp - stdio]
-        API[remem-api - REST]
-        SDK_PY[Python SDK]
-        SDK_TS[TS SDK]
-    end
-
-    subgraph Core [Reasoning Engine - remem-core]
-        CONS[Consolidation]
-        RETR[Guided Retrieval]
-        CONT[Contradiction Detection]
-        SCORE[Importance Scoring]
-        KG[Knowledge Graph Engine]
-    end
-
-    subgraph Models [Models & Providers]
-        CLD[Anthropic Claude]
-        GPT[OpenAI GPT-4o]
-        GEM[Google Gemini]
-        ONNX[Local ONNX - libremem]
-    end
-
-    subgraph Storage [Storage Layer]
-        SQL[SQLite + WAL]
-        HNSW[HNSW Vector Index]
-    end
-
-    Consumers --> Interface
-    Interface --> Core
-    Core --> Models
-    Core --> Storage
+```text
+┌─────────────────────────────────────────────────────┐
+│                  Agent Consumers                     │
+│  Claude Code · Cursor · Codex · Python/TS agents    │
+└──────────┬──────────────────┬───────────────────────┘
+           │ MCP stdio        │ REST API / SDK
+┌──────────▼──────────────────▼───────────────────────┐
+│              Interface Layer (Rust)                  │
+│     remem-mcp (stdio)  ·  remem-api (Axum REST)      │
+│     Python SDK (httpx)  ·  TypeScript SDK (fetch)    │
+└──────────────────────┬──────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────┐
+│          Reasoning Engine (remem-core)               │
+│  Consolidation · Guided Retrieval · Contradiction   │
+│  Detection · Importance Scoring · Knowledge Graph   │
+└──────┬──────────────────────────┬───────────────────┘
+       │                          │
+┌──────▼──────┐          ┌────────▼────────────────────┐
+│ Cloud APIs  │          │  Storage Layer               │
+│ Anthropic   │          │  SQLite + WAL (metadata)     │
+│ OpenAI      │          │  Vector Index (HNSW)         │
+└─────────────┘          └─────────────────────────────┘
 ```
 
 ## 🧠 Why remem?
@@ -72,7 +55,7 @@ Traditional vector stores often suffer from "confident recall of irrelevant cont
 
 ## 🚀 Quickstart
 
-### Model Context Protocol (MCP) — Claude Code / Cursor
+### Model Context Protocol (MCP) — Claude Code / Cursor / Codex
 
 remem is designed to work seamlessly with MCP-compliant environments. Add the following to your configuration:
 
@@ -96,7 +79,7 @@ pip install remem
 ```python
 from remem import Memory
 
-m = Memory(project="my-agent", reasoning_model="claude-sonnet-4-5")
+m = Memory(project="my-agent", reasoning_model="claude-sonnet-4-6")
 
 # Store a durable preference
 await m.store("The production database is PostgreSQL 15 on RDS", tags=["infra"])
@@ -117,7 +100,7 @@ npm install @remem/sdk
 ```typescript
 import { Memory } from "@remem/sdk";
 
-const m = new Memory({ project: "my-agent", reasoningModel: "gpt-4o" });
+const m = new Memory({ project: "my-agent", reasoningModel: "gpt-5.3" });
 await m.store("This repository uses trunk-based development", { tags: ["workflow"] });
 
 const results = await m.recall("how do we manage branches?");
@@ -125,7 +108,7 @@ const results = await m.recall("how do we manage branches?");
 
 ## ⚙️ How it Works
 
-1.  **Guided Retrieval**: When you query remem, it first retrieves the top 50 candidates using cosine similarity on the vector index. These candidates are then passed to an LLM (e.g., Claude 3.5 Sonnet) which filters and re-ranks them, returning the top ~8 most relevant memories accompanied by a "reasoning trace" explaining why they were chosen.
+1.  **Guided Retrieval**: When you query remem, it first retrieves the top 50 candidates using cosine similarity on the vector index. These candidates are then passed to an LLM (e.g., Claude 4.6 Sonnet) which filters and re-ranks them, returning the top ~8 most relevant memories accompanied by a "reasoning trace" explaining why they were chosen.
 2.  **Session Consolidation**: At the end of a session, remem can ingest the entire interaction log. An LLM extracts durable, high-signal facts, scores their importance, and identifies relationships between them.
 3.  **Knowledge Graph & Contradiction Detection**: Facts are stored as structured nodes and edges (triples) in a knowledge graph. When new information is added that conflicts with existing knowledge, remem flags the contradiction, allowing the agent to clarify or archive the stale memory.
 4.  **Local First (v0.2+)**: Using `libremem`, a custom C++ engine, remem supports local HNSW indexing and BERT-compatible tokenization for privacy-first, offline embedding generation.
