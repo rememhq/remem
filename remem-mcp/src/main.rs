@@ -16,6 +16,7 @@ use tracing;
 use remem_core::config::RememConfig;
 use remem_core::providers::anthropic::AnthropicProvider;
 use remem_core::providers::embeddings::OpenAIEmbeddings;
+use remem_core::providers::google::{GoogleEmbeddings, GoogleProvider};
 use remem_core::providers::openai::OpenAIProvider;
 use remem_core::reasoning::ReasoningEngine;
 use remem_core::storage::sqlite::SqliteStore;
@@ -79,6 +80,9 @@ impl JsonRpcResponse {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Load .env file
+    dotenvy::dotenv().ok();
+
     tracing_subscriber::fmt()
         .with_writer(std::io::stderr)
         .with_env_filter("remem=info")
@@ -98,6 +102,7 @@ async fn main() -> anyhow::Result<()> {
     let provider: Arc<dyn remem_core::providers::Provider> = match config.reasoning.provider.as_str()
     {
         "openai" => Arc::new(OpenAIProvider::new(None)?),
+        "google" => Arc::new(GoogleProvider::new(None)?),
         _ => {
             // Default to anthropic; if key not set, try openai
             match AnthropicProvider::new(None) {
@@ -107,9 +112,12 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    // Embedding provider (OpenAI for v0.1)
+    // Embedding provider (Google or OpenAI)
     let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> =
-        Arc::new(OpenAIEmbeddings::new(None, Some(768))?);
+        match config.reasoning.provider.as_str() {
+            "google" => Arc::new(GoogleEmbeddings::new(None)?),
+            _ => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),
+        };
 
     let engine = Arc::new(ReasoningEngine::new(
         config.clone(),
