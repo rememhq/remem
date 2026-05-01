@@ -1,6 +1,5 @@
 """Tests for the remem Python SDK."""
 
-import pytest
 
 
 class TestMemoryClient:

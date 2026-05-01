@@ -1,9 +1,6 @@
 import asyncio
-import os
-from datetime import datetime
 from uuid import uuid4
 from remem import Memory
-from remem.models import MemoryType
 
 
 async def run_simulation():
@@ -52,7 +49,7 @@ async def run_simulation():
         print(f"⚙️ Triggering consolidation for {session_id}...")
         report = await m.consolidate(session_id)
 
-        print(f"📊 Consolidation Report:")
+        print("📊 Consolidation Report:")
         print(f"   - New facts: {report.new_facts}")
         print(f"   - Updated facts: {report.updated_facts}")
         print(f"   - Contradictions detected: {len(report.contradictions)}")
@@ -79,10 +76,10 @@ async def run_simulation():
             tags=["cooking"],
         )
 
-        print(f"⚙️ Consolidating procedure into separate records...")
+        print("⚙️ Consolidating procedure into separate records...")
         report = await m.consolidate(session_id)
 
-        print(f"🔍 Recalling procedure context...")
+        print("🔍 Recalling procedure context...")
         proc_results = await m.recall("How do I bake a cake?")
         for i, res in enumerate(proc_results):
             print(f"  {i + 1}. [{res.memory_type}] {res.content}")
