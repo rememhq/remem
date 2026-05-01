@@ -7,6 +7,7 @@ pub mod consolidation;
 pub mod contradiction;
 pub mod retrieval;
 pub mod scoring;
+pub mod resolution;
 
 use crate::config::RememConfig;
 use crate::memory::types::{KnowledgeGraphUpdate, MemoryRecord, MemoryResult};

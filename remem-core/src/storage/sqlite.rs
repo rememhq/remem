@@ -310,6 +310,24 @@ impl MemoryStore for SqliteStore {
         Ok(triples)
     }
 
+    async fn list_recent_entities(&self, limit: usize) -> anyhow::Result<Vec<String>> {
+        let conn = self.conn.lock().await;
+        let mut stmt = conn.prepare(
+            "SELECT DISTINCT name FROM (
+                SELECT subject AS name, created_at FROM knowledge_graph
+                UNION ALL
+                SELECT object AS name, created_at FROM knowledge_graph
+            ) ORDER BY created_at DESC LIMIT ?1"
+        )?;
+
+        let entities = stmt
+            .query_map(params![limit as i64], |row| row.get(0))?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(entities)
+    }
+
     async fn search_fts(&self, query: &str, limit: usize) -> anyhow::Result<Vec<MemoryRecord>> {
         let conn = self.conn.lock().await;
         let mut stmt = conn.prepare(

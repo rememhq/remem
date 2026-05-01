@@ -12,9 +12,10 @@ unsafe impl Send for LocalEmbeddings {}
 unsafe impl Sync for LocalEmbeddings {}
 
 impl LocalEmbeddings {
-    pub fn new(model_path: &str) -> anyhow::Result<Self> {
-        let c_path = std::ffi::CString::new(model_path)?;
-        let handle = unsafe { remem_ffi::remem_embedder_new(c_path.as_ptr()) };
+    pub fn new(model_path: &str, vocab_path: &str) -> anyhow::Result<Self> {
+        let c_model_path = std::ffi::CString::new(model_path)?;
+        let c_vocab_path = std::ffi::CString::new(vocab_path)?;
+        let handle = unsafe { remem_ffi::remem_embedder_new(c_model_path.as_ptr(), c_vocab_path.as_ptr()) };
         
         if handle.is_null() {
             return Err(anyhow::anyhow!("Failed to initialize local embedder"));

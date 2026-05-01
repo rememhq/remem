@@ -43,6 +43,9 @@ pub trait MemoryStore: Send + Sync {
         object: Option<&str>,
     ) -> anyhow::Result<Vec<KnowledgeGraphUpdate>>;
 
+    /// List recent entity names for resolution purposes.
+    async fn list_recent_entities(&self, limit: usize) -> anyhow::Result<Vec<String>>;
+
     /// Full-text search using SQLite FTS5.
     async fn search_fts(&self, query: &str, limit: usize) -> anyhow::Result<Vec<MemoryRecord>>;
 

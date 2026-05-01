@@ -42,7 +42,7 @@ REMEM_API void remem_index_load(remem_index_t* index, const char* path);
 // --- Embedding Engine (v0.2+) ---
 
 // Lifecycle
-REMEM_API remem_embedder_t* remem_embedder_new(const char* model_path);
+REMEM_API remem_embedder_t* remem_embedder_new(const char* model_path, const char* vocab_path);
 REMEM_API void remem_embedder_free(remem_embedder_t* embedder);
 
 // Inference

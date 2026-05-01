@@ -7,8 +7,9 @@
 namespace remem {
 namespace embedding {
 
-ONNXEngine::ONNXEngine(const std::string& model_path) {
+ONNXEngine::ONNXEngine(const std::string& model_path, const std::string& vocab_path) {
     std::cout << "[libremem] Initializing ONNX engine with model: " << model_path << std::endl;
+    tokenizer_ = std::make_unique<Tokenizer>(vocab_path);
 #ifdef USE_ONNXRUNTIME
     try {
         Ort::SessionOptions session_options;
@@ -38,13 +39,18 @@ ONNXEngine::~ONNXEngine() {
 
 std::vector<float> ONNXEngine::embed(const std::string& text) {
 #ifdef USE_ONNXRUNTIME
-    // 1. Placeholder for real Tokenization (WordPiece/BPE)
-    // For now, we'll just use a mock input that matches expected shapes
-    // In a real implementation, we'd use a tokenizer library here.
+    // 1. Real Tokenization (WordPiece)
+    const size_t max_seq_length = 512;
+    std::vector<int64_t> input_ids = tokenizer_->tokenize(text, max_seq_length);
     
-    std::vector<int64_t> input_ids = {101, 102}; // Dummy CLS/SEP
-    std::vector<int64_t> attention_mask = {1, 1};
-    std::vector<int64_t> input_shape = {1, static_cast<int64_t>(input_ids.size())};
+    std::vector<int64_t> attention_mask(max_seq_length, 0);
+    for (size_t i = 0; i < input_ids.size(); ++i) {
+        if (input_ids[i] != 0) { // Assuming 0 is [PAD]
+            attention_mask[i] = 1;
+        }
+    }
+    
+    std::vector<int64_t> input_shape = {1, static_cast<int64_t>(max_seq_length)};
 
     auto input_tensor = Ort::Value::CreateTensor<int64_t>(
         memory_info_, input_ids.data(), input_ids.size(), input_shape.data(), input_shape.size());
@@ -58,7 +64,7 @@ std::vector<float> ONNXEngine::embed(const std::string& text) {
     auto output_tensors = session_->Run(Ort::RunOptions{nullptr}, input_names, inputs, 2, output_names, 1);
     
     float* float_data = output_tensors[0].GetTensorMutableData<float>();
-    // Mean pooling or [CLS] token selection would happen here
+    // Mean pooling or [CLS] token selection (using CLS for now)
     std::vector<float> embedding(float_data, float_data + dim_);
 #else
     // Mock implementation for testing bridge without ONNX Runtime binaries

@@ -8,12 +8,14 @@
 #include <onnxruntime_cxx_api.h>
 #endif
 
+#include "tokenizer.h"
+
 namespace remem {
 namespace embedding {
 
 class ONNXEngine {
 public:
-    ONNXEngine(const std::string& model_path);
+    ONNXEngine(const std::string& model_path, const std::string& vocab_path);
     ~ONNXEngine();
 
     std::vector<float> embed(const std::string& text);
@@ -21,6 +23,7 @@ public:
 
 private:
     size_t dim_ = 768;
+    std::unique_ptr<Tokenizer> tokenizer_;
 
 #ifdef USE_ONNXRUNTIME
     Ort::Env env_{ORT_LOGGING_LEVEL_WARNING, "remem"};

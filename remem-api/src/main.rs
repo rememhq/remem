@@ -365,7 +365,8 @@ async fn main() -> anyhow::Result<()> {
         "mock" => Arc::new(remem_core::providers::mock::MockEmbeddings::new(768)),
         "local" => {
             let model_path = std::env::var("REMEM_LOCAL_MODEL_PATH").unwrap_or_else(|_| "models/nomic-embed-text.onnx".to_string());
-            Arc::new(remem_core::providers::local::LocalEmbeddings::new(&model_path)?)
+            let vocab_path = std::env::var("REMEM_LOCAL_VOCAB_PATH").unwrap_or_else(|_| "models/vocab.txt".to_string());
+            Arc::new(remem_core::providers::local::LocalEmbeddings::new(&model_path, &vocab_path)?)
         },
         _ => match std::env::var("GOOGLE_API_KEY") {
             Ok(_) => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),

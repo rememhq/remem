@@ -50,7 +50,31 @@ pub async fn consolidate_session(
         .join("\n");
 
     // Step 1: Extract durable facts
-    let facts = extract_facts(provider, &session_content, model).await?;
+    let mut facts = extract_facts(provider, &session_content, model).await?;
+
+    // Step 1b: Resolve entities in Knowledge Graph triples
+    let resolver = super::resolution::LlmEntityResolver::new(provider, model.to_string(), store);
+    use super::resolution::EntityResolver;
+    
+    // Collect all triples from facts
+    let mut triples = Vec::new();
+    for f in &facts {
+        if let Some(t) = &f.knowledge_triple {
+            triples.push(t.clone());
+        }
+    }
+
+    if !triples.is_empty() {
+        let resolved_triples = resolver.resolve(triples).await?;
+        // Map resolved triples back to facts
+        let mut triple_idx = 0;
+        for f in &mut facts {
+            if f.knowledge_triple.is_some() {
+                f.knowledge_triple = Some(resolved_triples[triple_idx].clone());
+                triple_idx += 1;
+            }
+        }
+    }
 
     // Step 2: Check for contradictions with existing memories
     let contradictions =

@@ -14,7 +14,7 @@
 
 remem provides agents with **persistent, reasoned memory** that spans across sessions. Unlike traditional vector stores that rely solely on semantic similarity, remem incorporates an LLM reasoning step at every stage of the memory lifecycle: from initial importance scoring and guided retrieval to session-wide consolidation and contradiction detection.
 
-## 🏗️ Architecture
+## Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────┐
@@ -41,7 +41,7 @@ remem provides agents with **persistent, reasoned memory** that spans across ses
 └─────────────┘          └─────────────────────────────┘
 ```
 
-## 🧠 Why remem?
+## Why remem?
 
 Traditional vector stores often suffer from "confident recall of irrelevant context." They return what is semantically *nearest*, not what is actually *useful*. remem bridges this gap with reasoning.
 
@@ -120,7 +120,7 @@ const results = await m.recall("how do we manage branches?");
 - **SQLite**: Reliable metadata storage with WAL mode for high concurrency.
 - **Python & TypeScript**: Modern, type-safe SDKs for rapid integration.
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] **v0.1** — MCP support, REST API, Python/TS SDKs, basic consolidation.
 - [ ] **v0.2** — Knowledge Graph queries, Contradiction Detection, Gemini provider, C++ Tokenizer integration.
@@ -135,6 +135,6 @@ We welcome contributions! Whether you're fixing a bug, improving the reasoning p
 2.  Build: `cargo build`
 3.  Test: `cargo test --workspace`
 
-## 📄 License
+## License
 
 remem is licensed under the **Apache License 2.0**. See [LICENSE](LICENSE) for details.

@@ -104,10 +104,10 @@ void remem_index_load(remem_index_t* index, const char* path) {
 
 // --- Embedding Engine (v0.2+) ---
 
-remem_embedder_t* remem_embedder_new(const char* model_path) {
+remem_embedder_t* remem_embedder_new(const char* model_path, const char* vocab_path) {
     try {
         auto embedder = new remem_embedder_t();
-        embedder->impl = new ONNXEngine(model_path);
+        embedder->impl = new ONNXEngine(model_path, vocab_path);
         return embedder;
     } catch (const std::exception& e) {
         std::cerr << "[libremem] Error in remem_embedder_new: " << e.what() << std::endl;

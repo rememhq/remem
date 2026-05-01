@@ -29,7 +29,7 @@ pub mod remem_ffi {
         pub fn remem_index_load(index: *mut std::ffi::c_void, path: *const c_char);
 
         // Embedding Engine
-        pub fn remem_embedder_new(model_path: *const c_char) -> *mut remem_embedder_t;
+        pub fn remem_embedder_new(model_path: *const c_char, vocab_path: *const c_char) -> *mut remem_embedder_t;
         pub fn remem_embedder_free(embedder: *mut remem_embedder_t);
         pub fn remem_embed_text(embedder: *mut remem_embedder_t, text: *const c_char, out_dim: *mut usize) -> *mut f32;
         pub fn remem_free_embedding(ptr: *mut f32);

@@ -113,11 +113,21 @@ async fn main() -> anyhow::Result<()> {
         }
     };
 
-    // Embedding provider (Google or OpenAI)
+    // Embedding provider (Google, OpenAI, or Local)
     let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> =
         match config.reasoning.provider.as_str() {
             "google" => Arc::new(GoogleEmbeddings::new(None)?),
             "mock" => Arc::new(remem_core::providers::mock::MockEmbeddings::new(768)),
+            "local" => {
+                let model_path = std::env::var("REMEM_LOCAL_MODEL_PATH")
+                    .unwrap_or_else(|_| "models/nomic-embed-text.onnx".to_string());
+                let vocab_path = std::env::var("REMEM_LOCAL_VOCAB_PATH")
+                    .unwrap_or_else(|_| "models/vocab.txt".to_string());
+                Arc::new(remem_core::providers::local::LocalEmbeddings::new(
+                    &model_path,
+                    &vocab_path,
+                )?)
+            }
             _ => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),
         };
 

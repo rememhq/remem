@@ -20,6 +20,14 @@ FACT | procedure | 7 | baking | Then, mix the batter"#.to_string());
             }
             return Ok(r#"FACT | fact | 8 | rust | Alice likes Rust"# .to_string());
         }
+        if prompt.contains("entity resolution engine") {
+            if prompt.contains("Postgres") && prompt.contains("PostgreSQL") {
+                return Ok("PostgreSQL".to_string());
+            }
+            if prompt.contains("New Entity: \"Port 5432\"") {
+                return Ok("Port 5432".to_string());
+            }
+        }
         Ok("Mock response".to_string())
     }
 
