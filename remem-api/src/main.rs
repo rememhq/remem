@@ -342,27 +342,40 @@ async fn main() -> anyhow::Result<()> {
     let index = Arc::new(HNSWVectorIndex::new(768, 10000));
     let _ = index.load(&config.index_path()).await;
 
-    let provider: Arc<dyn remem_core::providers::Provider> = match config.reasoning.provider.as_str()
+    let reasoning_provider_name = std::env::var("REMEM_REASONING_PROVIDER")
+        .unwrap_or_else(|_| config.reasoning.provider.clone());
+
+    let provider: Arc<dyn remem_core::providers::Provider> = match reasoning_provider_name.as_str()
     {
         "openai" => Arc::new(OpenAIProvider::new(None)?),
         "anthropic" => Arc::new(AnthropicProvider::new(None)?),
         "google" => Arc::new(remem_core::providers::google::GoogleProvider::new(None)?),
-        "mock" => Arc::new(remem_core::providers::mock::MockProvider),
+        "mock" | "local" => Arc::new(remem_core::providers::mock::MockProvider),
         _ => match std::env::var("GOOGLE_API_KEY") {
             Ok(_) => Arc::new(remem_core::providers::google::GoogleProvider::new(None)?),
             Err(_) => Arc::new(OpenAIProvider::new(None)?),
         },
     };
 
-    let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> = match config.reasoning.provider.as_str() {
+    let embedding_provider_name = std::env::var("REMEM_EMBEDDING_PROVIDER")
+        .unwrap_or_else(|_| config.reasoning.provider.clone());
+
+    let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> = match embedding_provider_name.as_str() {
         "google" => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
         "mock" => Arc::new(remem_core::providers::mock::MockEmbeddings::new(768)),
+        "local" => {
+            let model_path = std::env::var("REMEM_LOCAL_MODEL_PATH").unwrap_or_else(|_| "models/nomic-embed-text.onnx".to_string());
+            Arc::new(remem_core::providers::local::LocalEmbeddings::new(&model_path)?)
+        },
         _ => match std::env::var("GOOGLE_API_KEY") {
             Ok(_) => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
             Err(_) => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),
         }
     };
 
+    tracing::info!("Initializing ReasoningEngine with project: {}", args.project);
+    tracing::info!("Using reasoning provider: {}", reasoning_provider_name);
+    tracing::info!("Using embedding provider: {}", embedding_provider_name);
     let engine = Arc::new(ReasoningEngine::new(
         config.clone(),
         provider,

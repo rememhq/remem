@@ -1,14 +1,35 @@
-// libremem — C++ embedding engine placeholder
-// v0.2+ will implement ONNX Runtime wrapping for nomic-embed-text
-
 #pragma once
+
+#include <string>
+#include <vector>
+#include <memory>
+
+#ifdef USE_ONNXRUNTIME
+#include <onnxruntime_cxx_api.h>
+#endif
 
 namespace remem {
 namespace embedding {
 
-// TODO: ONNX Runtime session wrapper
-// TODO: Tokenizer integration (tokenizers-cpp)
-// TODO: Batch embedding generation
+class ONNXEngine {
+public:
+    ONNXEngine(const std::string& model_path);
+    ~ONNXEngine();
+
+    std::vector<float> embed(const std::string& text);
+    size_t dimension() const { return dim_; }
+
+private:
+    size_t dim_ = 768;
+
+#ifdef USE_ONNXRUNTIME
+    Ort::Env env_{ORT_LOGGING_LEVEL_WARNING, "remem"};
+    std::unique_ptr<Ort::Session> session_;
+    Ort::MemoryInfo memory_info_{Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)};
+#else
+    void* session_ = nullptr; 
+#endif
+};
 
 } // namespace embedding
 } // namespace remem

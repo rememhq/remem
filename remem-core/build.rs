@@ -6,6 +6,7 @@ fn main() {
         .cpp(true)
         .std("c++17")
         .file("../libremem/src/vector_store/index.cpp")
+        .file("../libremem/src/embedding/engine.cpp")
         .file("../libremem/src/ffi/remem.cpp")
         .include("../libremem/include")
         .include("../libremem/src")
