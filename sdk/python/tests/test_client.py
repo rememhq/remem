@@ -1,7 +1,6 @@
 """Tests for the remem Python SDK."""
 
 
-
 class TestMemoryClient:
     """Unit tests for the Memory client (mocked HTTP)."""
 
