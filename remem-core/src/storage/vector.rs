@@ -147,8 +147,7 @@ impl VectorIndex for HNSWVectorIndex {
     }
 
     fn len(&self) -> usize {
-        let size = unsafe { remem_ffi::remem_index_size(self.handle) };
-        size as usize
+        unsafe { remem_ffi::remem_index_size(self.handle) }
     }
 
     fn is_empty(&self) -> bool {
