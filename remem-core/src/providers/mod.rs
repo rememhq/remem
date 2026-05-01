@@ -3,6 +3,7 @@
 pub mod anthropic;
 pub mod embeddings;
 pub mod openai;
+pub mod google;
 
 use async_trait::async_trait;
 

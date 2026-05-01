@@ -24,3 +24,4 @@ tower = { workspace = true }
 tower-http = { workspace = true }
 clap = { workspace = true }
 async-trait = { workspace = true }
+dotenvy = "0.15.7"

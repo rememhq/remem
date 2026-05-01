@@ -29,15 +29,11 @@ impl SqliteStore {
         conn.execute_batch("PRAGMA synchronous = NORMAL;")?;
         conn.execute_batch("PRAGMA foreign_keys = ON;")?;
 
-        let store = Self {
+        Self::init_schema(&conn)?;
+
+        Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
-        };
-        // Use blocking init since we hold the lock
-        {
-            let rt = tokio::runtime::Handle::current();
-            rt.block_on(store.init_schema())?;
-        }
-        Ok(store)
+        })
     }
 
     /// Open an in-memory database (for testing).
@@ -46,18 +42,15 @@ impl SqliteStore {
         conn.execute_batch("PRAGMA journal_mode = WAL;")?;
         conn.execute_batch("PRAGMA foreign_keys = ON;")?;
 
-        let store = Self {
+        Self::init_schema(&conn)?;
+
+        Ok(Self {
             conn: Arc::new(Mutex::new(conn)),
-        };
-        let rt = tokio::runtime::Handle::current();
-        rt.block_on(store.init_schema())?;
-        Ok(store)
+        })
     }
 
-    /// Initialize the database schema.
-    async fn init_schema(&self) -> anyhow::Result<()> {
-        let conn = self.conn.lock().await;
-
+    /// Initialize the database schema synchronously before sharing the connection.
+    fn init_schema(conn: &Connection) -> anyhow::Result<()> {
         conn.execute_batch(
             "
             CREATE TABLE IF NOT EXISTS memories (

@@ -139,6 +139,7 @@ async fn store_memory(
     }
 
     let stored = engine.store_memory(record, auto_score).await.map_err(|e| {
+        tracing::error!("store_memory failed: {:?}", e);
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse {
@@ -327,6 +328,8 @@ async fn health() -> &'static str {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    dotenvy::dotenv().ok();
+
     tracing_subscriber::fmt()
         .with_env_filter("remem=info,tower_http=debug")
         .init();
@@ -342,14 +345,21 @@ async fn main() -> anyhow::Result<()> {
     let provider: Arc<dyn remem_core::providers::Provider> = match config.reasoning.provider.as_str()
     {
         "openai" => Arc::new(OpenAIProvider::new(None)?),
-        _ => match AnthropicProvider::new(None) {
-            Ok(p) => Arc::new(p),
+        "anthropic" => Arc::new(AnthropicProvider::new(None)?),
+        "google" => Arc::new(remem_core::providers::google::GoogleProvider::new(None)?),
+        _ => match std::env::var("GOOGLE_API_KEY") {
+            Ok(_) => Arc::new(remem_core::providers::google::GoogleProvider::new(None)?),
             Err(_) => Arc::new(OpenAIProvider::new(None)?),
         },
     };
 
-    let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> =
-        Arc::new(OpenAIEmbeddings::new(None, Some(768))?);
+    let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> = match config.reasoning.provider.as_str() {
+        "google" => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
+        _ => match std::env::var("GOOGLE_API_KEY") {
+            Ok(_) => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
+            Err(_) => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),
+        }
+    };
 
     let engine = Arc::new(ReasoningEngine::new(
         config.clone(),
