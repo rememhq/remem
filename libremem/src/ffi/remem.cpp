@@ -63,3 +63,41 @@ void remem_index_save(remem_index_t* index, const char* path) {
 void remem_index_load(remem_index_t* index, const char* path) {
     index->impl->load(path);
 }
+
+// --- Embedding Engine (v0.2+) ---
+
+struct remem_embedder_t {
+    size_t dim;
+    // TODO: Ort::Session* session;
+};
+
+remem_embedder_t* remem_embedder_new(const char* model_path) {
+    auto embedder = new remem_embedder_t();
+    embedder->dim = 768; // Default for many modern embedders
+    // TODO: Load model from path using ONNX Runtime
+    return embedder;
+}
+
+void remem_embedder_free(remem_embedder_t* embedder) {
+    if (embedder) delete embedder;
+}
+
+float* remem_embed_text(remem_embedder_t* embedder, const char* text, size_t* out_dim) {
+    *out_dim = embedder->dim;
+    float* embedding = (float*)malloc(sizeof(float) * embedder->dim);
+    
+    // Mock: Fill with stable value based on first char for testing
+    for (size_t i = 0; i < embedder->dim; ++i) {
+        embedding[i] = (float)text[0] / 255.0f;
+    }
+    
+    return embedding;
+}
+
+void remem_free_embedding(float* embedding) {
+    if (embedding) free(embedding);
+}
+
+size_t remem_embedder_dim(remem_embedder_t* embedder) {
+    return embedder ? embedder->dim : 0;
+}

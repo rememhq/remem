@@ -16,6 +16,9 @@ extern "C" {
 // Vector Index Opaque Handle
 typedef struct remem_index_t remem_index_t;
 
+// Embedding Engine Opaque Handle
+typedef struct remem_embedder_t remem_embedder_t;
+
 // Search Result structure
 typedef struct {
     char id[40]; // UUID string + null
@@ -33,9 +36,21 @@ REMEM_API size_t remem_index_size(remem_index_t* index);
 REMEM_API remem_search_result_t* remem_index_search(remem_index_t* index, const float* query, size_t k, size_t* out_count);
 REMEM_API void remem_free_results(remem_search_result_t* results);
 
-// Persistence
 REMEM_API void remem_index_save(remem_index_t* index, const char* path);
 REMEM_API void remem_index_load(remem_index_t* index, const char* path);
+
+// --- Embedding Engine (v0.2+) ---
+
+// Lifecycle
+REMEM_API remem_embedder_t* remem_embedder_new(const char* model_path);
+REMEM_API void remem_embedder_free(remem_embedder_t* embedder);
+
+// Inference
+REMEM_API float* remem_embed_text(remem_embedder_t* embedder, const char* text, size_t* out_dim);
+REMEM_API void remem_free_embedding(float* embedding);
+
+// Info
+REMEM_API size_t remem_embedder_dim(remem_embedder_t* embedder);
 
 #ifdef __cplusplus
 }

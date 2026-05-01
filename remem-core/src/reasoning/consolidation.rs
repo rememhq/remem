@@ -53,9 +53,8 @@ pub async fn consolidate_session(
     let facts = extract_facts(provider, &session_content, model).await?;
 
     // Step 2: Check for contradictions with existing memories
-    let existing_memories = store.list(&[], None, None, 500).await?;
     let contradictions =
-        super::contradiction::detect_contradictions(provider, &facts, &existing_memories, model)
+        super::contradiction::detect_contradictions(provider, embeddings, index, store, &facts, model)
             .await?;
 
     // Auto-resolve contradictions by archiving the old superseded memories
@@ -151,6 +150,14 @@ FACT | [type: fact/procedure/preference/decision] | [importance: 1-10] | [tags: 
 
 Optionally, if the fact represents a relationship, add a knowledge triple:
 TRIPLE | [subject] | [predicate] | [object]
+
+Special Case: PROCEDURES
+If you extract a procedure with multiple steps, output EACH STEP as a separate FACT with `type: procedure`.
+Link them using knowledge triples with the predicate `next_step`.
+Example:
+FACT | procedure | 8 | deploy | To deploy, first run build
+TRIPLE | To deploy, first run build | next_step | Then run push
+FACT | procedure | 8 | deploy | Then run push
 
 Session log:
 {session_content}

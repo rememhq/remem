@@ -40,12 +40,12 @@ async def run_simulation():
         
         # --- Day 3: A contradiction appears ---
         print("\n--- Day 3: Contradiction Check ---")
-        print("💾 Storing conflicting info: 'Alice actually works in Python now.'")
-        # In a real scenario, the consolidation pass would detect this
-        await m.store("Alice actually works in Python now.", tags=["work"])
+        # Alice moved to New York (was in Berlin)
+        print("💾 Storing update: 'I just moved to New York!'")
+        await m.store("I just moved to New York!", tags=["bio", "location"])
         
         # --- Day 4: Consolidation ---
-        print("\n--- Day 4: Consolidation Pass ---")
+        print("\n--- Day 4: Consolidation Pass (with Contradiction Resolution) ---")
         print(f"⚙️ Triggering consolidation for {session_id}...")
         report = await m.consolidate(session_id)
         
@@ -56,13 +56,28 @@ async def run_simulation():
         
         for c in report.contradictions:
             print(f"   ⚠️ Contradiction: {c.explanation}")
+            print(f"      - OLD: {c.existing_content}")
+            print(f"      - NEW: {c.new_content}")
             
         # --- Day 5: Final State ---
         print("\n--- Day 5: Final Knowledge State ---")
-        final_query = "What is Alice's current focus?"
+        final_query = "Where does Alice live?"
         final_results = await m.recall(final_query)
         for i, res in enumerate(final_results):
             print(f"  {i+1}. {res.content}")
+
+        # --- Day 6: Procedural Memory ---
+        print("\n--- Day 6: Procedural Memory (Step-by-step) ---")
+        print("💾 Storing a procedure: 'To bake a cake: First, preheat the oven. Then, mix the batter.'")
+        await m.store("To bake a cake: First, preheat the oven. Then, mix the batter.", tags=["cooking"])
+        
+        print(f"⚙️ Consolidating procedure into separate records...")
+        report = await m.consolidate(session_id)
+        
+        print(f"🔍 Recalling procedure context...")
+        proc_results = await m.recall("How do I bake a cake?")
+        for i, res in enumerate(proc_results):
+            print(f"  {i+1}. [{res.memory_type}] {res.content}")
 
 if __name__ == "__main__":
     try:

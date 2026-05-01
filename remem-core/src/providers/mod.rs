@@ -5,6 +5,7 @@ pub mod embeddings;
 pub mod openai;
 pub mod google;
 pub mod mock;
+pub mod local;
 
 use async_trait::async_trait;
 
