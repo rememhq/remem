@@ -251,6 +251,65 @@ impl MemoryStore for SqliteStore {
         Ok(())
     }
 
+    async fn get_knowledge_for_entity(&self, entity: &str) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
+        let conn = self.conn.lock().await;
+        let mut stmt = conn.prepare(
+            "SELECT subject, predicate, object FROM knowledge_graph 
+             WHERE subject = ?1 OR object = ?1",
+        )?;
+
+        let triples = stmt
+            .query_map(params![entity], |row| {
+                Ok(KnowledgeGraphUpdate {
+                    subject: row.get(0)?,
+                    predicate: row.get(1)?,
+                    object: row.get(2)?,
+                })
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(triples)
+    }
+
+    async fn query_knowledge(
+        &self,
+        subject: Option<&str>,
+        predicate: Option<&str>,
+        object: Option<&str>,
+    ) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
+        let conn = self.conn.lock().await;
+        let mut sql = String::from("SELECT subject, predicate, object FROM knowledge_graph WHERE 1=1");
+        let mut params_vec: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
+
+        if let Some(s) = subject {
+            sql.push_str(" AND subject = ?");
+            params_vec.push(Box::new(s.to_string()));
+        }
+        if let Some(p) = predicate {
+            sql.push_str(" AND predicate = ?");
+            params_vec.push(Box::new(p.to_string()));
+        }
+        if let Some(o) = object {
+            sql.push_str(" AND object = ?");
+            params_vec.push(Box::new(o.to_string()));
+        }
+
+        let mut stmt = conn.prepare(&sql)?;
+        let triples = stmt
+            .query_map(rusqlite::params_from_iter(params_vec), |row| {
+                Ok(KnowledgeGraphUpdate {
+                    subject: row.get(0)?,
+                    predicate: row.get(1)?,
+                    object: row.get(2)?,
+                })
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(triples)
+    }
+
     async fn search_fts(&self, query: &str, limit: usize) -> anyhow::Result<Vec<MemoryRecord>> {
         let conn = self.conn.lock().await;
         let mut stmt = conn.prepare(

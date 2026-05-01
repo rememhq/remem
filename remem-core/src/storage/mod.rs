@@ -26,12 +26,22 @@ pub trait MemoryStore: Send + Sync {
     /// Delete a memory by ID.
     async fn delete(&self, id: Uuid) -> anyhow::Result<bool>;
 
-    /// Insert a knowledge graph triple extracted from a memory.
     async fn insert_knowledge_triple(
         &self,
         triple: &KnowledgeGraphUpdate,
         memory_id: Uuid,
     ) -> anyhow::Result<()>;
+
+    /// Get all knowledge triples related to an entity (subject or object).
+    async fn get_knowledge_for_entity(&self, entity: &str) -> anyhow::Result<Vec<KnowledgeGraphUpdate>>;
+
+    /// Query knowledge triples with optional filters.
+    async fn query_knowledge(
+        &self,
+        subject: Option<&str>,
+        predicate: Option<&str>,
+        object: Option<&str>,
+    ) -> anyhow::Result<Vec<KnowledgeGraphUpdate>>;
 
     /// Full-text search using SQLite FTS5.
     async fn search_fts(&self, query: &str, limit: usize) -> anyhow::Result<Vec<MemoryRecord>>;

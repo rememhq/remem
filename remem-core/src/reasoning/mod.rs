@@ -9,7 +9,7 @@ pub mod retrieval;
 pub mod scoring;
 
 use crate::config::RememConfig;
-use crate::memory::types::{MemoryRecord, MemoryResult};
+use crate::memory::types::{KnowledgeGraphUpdate, MemoryRecord, MemoryResult};
 use crate::providers::{EmbeddingProvider, Provider};
 use crate::storage::sqlite::SqliteStore;
 use crate::storage::vector::VectorIndex;
@@ -155,6 +155,21 @@ impl ReasoningEngine {
 
         results.truncate(limit);
         Ok(results)
+    }
+
+    /// Search the knowledge graph for a specific entity.
+    pub async fn get_entity_context(&self, entity: &str) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
+        self.store.get_knowledge_for_entity(entity).await
+    }
+
+    /// Query the knowledge graph with filters.
+    pub async fn query_knowledge(
+        &self,
+        subject: Option<&str>,
+        predicate: Option<&str>,
+        object: Option<&str>,
+    ) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
+        self.store.query_knowledge(subject, predicate, object).await
     }
 
     /// Update a memory's content, importance, or tags.

@@ -20,7 +20,7 @@ use remem_core::providers::google::{GoogleEmbeddings, GoogleProvider};
 use remem_core::providers::openai::OpenAIProvider;
 use remem_core::reasoning::ReasoningEngine;
 use remem_core::storage::sqlite::SqliteStore;
-use remem_core::storage::vector::VectorIndex;
+use remem_core::storage::vector::{HNSWVectorIndex, VectorIndex};
 
 #[derive(Parser)]
 #[command(name = "remem-mcp")]
@@ -93,16 +93,17 @@ async fn main() -> anyhow::Result<()> {
 
     // Initialize components
     let store = Arc::new(SqliteStore::open(&config.db_path())?);
-    let index = Arc::new(VectorIndex::new(768));
+    let index = Arc::new(HNSWVectorIndex::new(768, 10000));
 
     // Load existing index if available
-    index.load(&config.index_path()).await?;
+    let _ = index.load(&config.index_path()).await;
 
     // Create provider based on config
     let provider: Arc<dyn remem_core::providers::Provider> = match config.reasoning.provider.as_str()
     {
         "openai" => Arc::new(OpenAIProvider::new(None)?),
         "google" => Arc::new(GoogleProvider::new(None)?),
+        "mock" => Arc::new(remem_core::providers::mock::MockProvider),
         _ => {
             // Default to anthropic; if key not set, try openai
             match AnthropicProvider::new(None) {
@@ -116,6 +117,7 @@ async fn main() -> anyhow::Result<()> {
     let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> =
         match config.reasoning.provider.as_str() {
             "google" => Arc::new(GoogleEmbeddings::new(None)?),
+            "mock" => Arc::new(remem_core::providers::mock::MockEmbeddings::new(768)),
             _ => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),
         };
 

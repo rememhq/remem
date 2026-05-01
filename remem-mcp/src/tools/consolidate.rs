@@ -35,7 +35,7 @@ pub async fn handle(engine: &Arc<ReasoningEngine>, args: &Value) -> anyhow::Resu
         &*engine.provider,
         &*engine.embeddings,
         &engine.store,
-        &engine.index,
+        engine.index.as_ref(),
         session_id,
         &model,
     )

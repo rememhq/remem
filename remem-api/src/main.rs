@@ -26,7 +26,7 @@ use remem_core::providers::embeddings::OpenAIEmbeddings;
 use remem_core::providers::openai::OpenAIProvider;
 use remem_core::reasoning::ReasoningEngine;
 use remem_core::storage::sqlite::SqliteStore;
-use remem_core::storage::vector::VectorIndex;
+use remem_core::storage::vector::{HNSWVectorIndex, VectorIndex};
 
 type AppState = Arc<ReasoningEngine>;
 
@@ -305,7 +305,7 @@ async fn consolidate_session(
         &*engine.provider,
         &*engine.embeddings,
         &engine.store,
-        &engine.index,
+        engine.index.as_ref(),
         &session_id,
         &model,
     )
@@ -339,14 +339,15 @@ async fn main() -> anyhow::Result<()> {
 
     // Initialize components
     let store = Arc::new(SqliteStore::open(&config.db_path())?);
-    let index = Arc::new(VectorIndex::new(768));
-    index.load(&config.index_path()).await?;
+    let index = Arc::new(HNSWVectorIndex::new(768, 10000));
+    let _ = index.load(&config.index_path()).await;
 
     let provider: Arc<dyn remem_core::providers::Provider> = match config.reasoning.provider.as_str()
     {
         "openai" => Arc::new(OpenAIProvider::new(None)?),
         "anthropic" => Arc::new(AnthropicProvider::new(None)?),
         "google" => Arc::new(remem_core::providers::google::GoogleProvider::new(None)?),
+        "mock" => Arc::new(remem_core::providers::mock::MockProvider),
         _ => match std::env::var("GOOGLE_API_KEY") {
             Ok(_) => Arc::new(remem_core::providers::google::GoogleProvider::new(None)?),
             Err(_) => Arc::new(OpenAIProvider::new(None)?),
@@ -355,6 +356,7 @@ async fn main() -> anyhow::Result<()> {
 
     let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> = match config.reasoning.provider.as_str() {
         "google" => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
+        "mock" => Arc::new(remem_core::providers::mock::MockEmbeddings::new(768)),
         _ => match std::env::var("GOOGLE_API_KEY") {
             Ok(_) => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
             Err(_) => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),

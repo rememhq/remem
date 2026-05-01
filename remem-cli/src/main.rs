@@ -18,7 +18,7 @@ use remem_core::providers::google::{GoogleEmbeddings, GoogleProvider};
 use remem_core::providers::openai::OpenAIProvider;
 use remem_core::reasoning::ReasoningEngine;
 use remem_core::storage::sqlite::SqliteStore;
-use remem_core::storage::vector::VectorIndex;
+use remem_core::storage::vector::{HNSWVectorIndex, VectorIndex};
 use remem_core::storage::MemoryStore;
 
 #[derive(Parser)]
@@ -248,13 +248,14 @@ async fn main() -> anyhow::Result<()> {
 /// Build a reasoning engine from config (shared setup for CLI commands).
 async fn build_engine(config: &RememConfig) -> anyhow::Result<ReasoningEngine> {
     let store = Arc::new(SqliteStore::open(&config.db_path())?);
-    let index = Arc::new(VectorIndex::new(768));
-    index.load(&config.index_path()).await?;
+    let index = Arc::new(HNSWVectorIndex::new(768, 10000));
+    let _ = index.load(&config.index_path()).await;
 
     let provider: Arc<dyn remem_core::providers::Provider> =
         match config.reasoning.provider.as_str() {
             "openai" => Arc::new(OpenAIProvider::new(None)?),
             "google" => Arc::new(GoogleProvider::new(None)?),
+            "mock" => Arc::new(remem_core::providers::mock::MockProvider),
             _ => match AnthropicProvider::new(None) {
                 Ok(p) => Arc::new(p),
                 Err(_) => Arc::new(OpenAIProvider::new(None)?),
@@ -264,6 +265,7 @@ async fn build_engine(config: &RememConfig) -> anyhow::Result<ReasoningEngine> {
     let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> =
         match config.reasoning.provider.as_str() {
             "google" => Arc::new(GoogleEmbeddings::new(None)?),
+            "mock" => Arc::new(remem_core::providers::mock::MockEmbeddings::new(768)),
             _ => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),
         };
 
