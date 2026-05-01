@@ -1,7 +1,7 @@
+use async_trait::async_trait;
 use std::ffi::{CStr, CString};
 use std::path::Path;
 use uuid::Uuid;
-use async_trait::async_trait;
 
 pub mod remem_ffi {
     use std::os::raw::{c_char, c_float};
@@ -15,7 +15,12 @@ pub mod remem_ffi {
     extern "C" {
         pub fn remem_index_new(dim: usize, max_elements: usize) -> *mut std::ffi::c_void;
         pub fn remem_index_free(index: *mut std::ffi::c_void);
-        pub fn remem_index_add(index: *mut std::ffi::c_void, id: *const c_char, data: *const c_float, len: usize);
+        pub fn remem_index_add(
+            index: *mut std::ffi::c_void,
+            id: *const c_char,
+            data: *const c_float,
+            len: usize,
+        );
         pub fn remem_index_remove(index: *mut std::ffi::c_void, id: *const c_char);
         pub fn remem_index_size(index: *mut std::ffi::c_void) -> usize;
         pub fn remem_index_search(
@@ -29,9 +34,16 @@ pub mod remem_ffi {
         pub fn remem_index_load(index: *mut std::ffi::c_void, path: *const c_char);
 
         // Embedding Engine
-        pub fn remem_embedder_new(model_path: *const c_char, vocab_path: *const c_char) -> *mut remem_embedder_t;
+        pub fn remem_embedder_new(
+            model_path: *const c_char,
+            vocab_path: *const c_char,
+        ) -> *mut remem_embedder_t;
         pub fn remem_embedder_free(embedder: *mut remem_embedder_t);
-        pub fn remem_embed_text(embedder: *mut remem_embedder_t, text: *const c_char, out_dim: *mut usize) -> *mut f32;
+        pub fn remem_embed_text(
+            embedder: *mut remem_embedder_t,
+            text: *const c_char,
+            out_dim: *mut usize,
+        ) -> *mut f32;
         pub fn remem_free_embedding(ptr: *mut f32);
         pub fn remem_embedder_dim(embedder: *mut remem_embedder_t) -> usize;
     }
@@ -88,7 +100,12 @@ impl VectorIndex for HNSWVectorIndex {
     async fn add(&self, id: Uuid, embedding: &[f32]) -> anyhow::Result<()> {
         let id_str = CString::new(id.to_string())?;
         unsafe {
-            remem_ffi::remem_index_add(self.handle, id_str.as_ptr(), embedding.as_ptr(), embedding.len());
+            remem_ffi::remem_index_add(
+                self.handle,
+                id_str.as_ptr(),
+                embedding.as_ptr(),
+                embedding.len(),
+            );
         }
         Ok(())
     }
@@ -104,7 +121,8 @@ impl VectorIndex for HNSWVectorIndex {
     async fn search(&self, query: &[f32], k: usize) -> anyhow::Result<Vec<VectorResult>> {
         let mut count: usize = 0;
         unsafe {
-            let results_ptr = remem_ffi::remem_index_search(self.handle, query.as_ptr(), k, &mut count);
+            let results_ptr =
+                remem_ffi::remem_index_search(self.handle, query.as_ptr(), k, &mut count);
             if results_ptr.is_null() {
                 return Ok(vec![]);
             }

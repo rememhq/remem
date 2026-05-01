@@ -1,9 +1,9 @@
-mod store;
+mod consolidate;
+mod forget;
 mod recall;
 mod search;
+mod store;
 mod update;
-mod forget;
-mod consolidate;
 
 use remem_core::reasoning::ReasoningEngine;
 use serde_json::Value;

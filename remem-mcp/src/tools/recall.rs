@@ -46,7 +46,9 @@ pub async fn handle(engine: &Arc<ReasoningEngine>, args: &Value) -> anyhow::Resu
         .and_then(|v| v.as_str())
         .and_then(|s| s.parse().ok());
 
-    let results = engine.recall(query, limit, &filter_tags, since, memory_type).await?;
+    let results = engine
+        .recall(query, limit, &filter_tags, since, memory_type)
+        .await?;
 
     let text = serde_json::to_string_pretty(&results)?;
     Ok(serde_json::json!({

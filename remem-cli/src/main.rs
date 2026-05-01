@@ -184,7 +184,12 @@ async fn main() -> anyhow::Result<()> {
             } else {
                 println!("Found {} memories:\n", results.len());
                 for (i, r) in results.iter().enumerate() {
-                    println!("  {}. [importance: {:.1}] {}", i + 1, r.importance, r.content);
+                    println!(
+                        "  {}. [importance: {:.1}] {}",
+                        i + 1,
+                        r.importance,
+                        r.content
+                    );
                     if let Some(reasoning) = &r.reasoning {
                         println!("     → {}", reasoning);
                     }

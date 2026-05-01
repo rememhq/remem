@@ -1,7 +1,7 @@
 //! Integration tests for the reasoning engine (mock provider).
 
 use remem_core::memory::types::{MemoryRecord, MemoryType};
-use remem_core::providers::mock::{MockProvider, MockEmbeddings};
+use remem_core::providers::mock::{MockEmbeddings, MockProvider};
 
 #[test]
 fn test_memory_type_display() {
@@ -14,7 +14,10 @@ fn test_memory_type_display() {
 #[test]
 fn test_memory_type_from_str() {
     assert_eq!("fact".parse::<MemoryType>().unwrap(), MemoryType::Fact);
-    assert_eq!("procedure".parse::<MemoryType>().unwrap(), MemoryType::Procedure);
+    assert_eq!(
+        "procedure".parse::<MemoryType>().unwrap(),
+        MemoryType::Procedure
+    );
     assert_eq!("FACT".parse::<MemoryType>().unwrap(), MemoryType::Fact);
     assert!("invalid".parse::<MemoryType>().is_err());
 }
@@ -47,7 +50,10 @@ fn test_importance_clamping() {
 async fn test_mock_provider_complete() {
     use remem_core::providers::Provider;
     let provider = MockProvider;
-    let result = provider.complete("test prompt", "test-model").await.unwrap();
+    let result = provider
+        .complete("test prompt", "test-model")
+        .await
+        .unwrap();
     assert!(!result.is_empty());
 }
 

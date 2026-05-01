@@ -34,8 +34,14 @@ pub async fn handle(engine: &Arc<ReasoningEngine>, args: &Value) -> anyhow::Resu
         .and_then(|v| serde_json::from_value(v.clone()).ok())
         .unwrap_or_default();
 
-    let importance = args.get("importance").and_then(|v| v.as_f64()).map(|v| v as f32);
-    let ttl_days = args.get("ttl_days").and_then(|v| v.as_u64()).map(|v| v as u32);
+    let importance = args
+        .get("importance")
+        .and_then(|v| v.as_f64())
+        .map(|v| v as f32);
+    let ttl_days = args
+        .get("ttl_days")
+        .and_then(|v| v.as_u64())
+        .map(|v| v as u32);
 
     let memory_type: MemoryType = args
         .get("type")

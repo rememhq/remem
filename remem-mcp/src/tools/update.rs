@@ -28,8 +28,14 @@ pub async fn handle(engine: &Arc<ReasoningEngine>, args: &Value) -> anyhow::Resu
         .ok_or_else(|| anyhow::anyhow!("Missing id"))?;
     let id = uuid::Uuid::parse_str(id_str)?;
 
-    let content = args.get("content").and_then(|v| v.as_str()).map(String::from);
-    let importance = args.get("importance").and_then(|v| v.as_f64()).map(|v| v as f32);
+    let content = args
+        .get("content")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let importance = args
+        .get("importance")
+        .and_then(|v| v.as_f64())
+        .map(|v| v as f32);
     let tags: Option<Vec<String>> = args
         .get("tags")
         .and_then(|v| serde_json::from_value(v.clone()).ok());

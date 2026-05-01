@@ -33,7 +33,10 @@ pub trait MemoryStore: Send + Sync {
     ) -> anyhow::Result<()>;
 
     /// Get all knowledge triples related to an entity (subject or object).
-    async fn get_knowledge_for_entity(&self, entity: &str) -> anyhow::Result<Vec<KnowledgeGraphUpdate>>;
+    async fn get_knowledge_for_entity(
+        &self,
+        entity: &str,
+    ) -> anyhow::Result<Vec<KnowledgeGraphUpdate>>;
 
     /// Query knowledge triples with optional filters.
     async fn query_knowledge(

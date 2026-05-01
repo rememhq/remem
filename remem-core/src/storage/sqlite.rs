@@ -227,7 +227,10 @@ impl MemoryStore for SqliteStore {
 
     async fn delete(&self, id: Uuid) -> anyhow::Result<bool> {
         let conn = self.conn.lock().await;
-        let rows = conn.execute("DELETE FROM memories WHERE id = ?1", params![id.to_string()])?;
+        let rows = conn.execute(
+            "DELETE FROM memories WHERE id = ?1",
+            params![id.to_string()],
+        )?;
         Ok(rows > 0)
     }
 
@@ -251,7 +254,10 @@ impl MemoryStore for SqliteStore {
         Ok(())
     }
 
-    async fn get_knowledge_for_entity(&self, entity: &str) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
+    async fn get_knowledge_for_entity(
+        &self,
+        entity: &str,
+    ) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
         let conn = self.conn.lock().await;
         let mut stmt = conn.prepare(
             "SELECT subject, predicate, object FROM knowledge_graph 
@@ -279,7 +285,8 @@ impl MemoryStore for SqliteStore {
         object: Option<&str>,
     ) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
         let conn = self.conn.lock().await;
-        let mut sql = String::from("SELECT subject, predicate, object FROM knowledge_graph WHERE 1=1");
+        let mut sql =
+            String::from("SELECT subject, predicate, object FROM knowledge_graph WHERE 1=1");
         let mut params_vec: Vec<Box<dyn rusqlite::types::ToSql>> = Vec::new();
 
         if let Some(s) = subject {
@@ -317,7 +324,7 @@ impl MemoryStore for SqliteStore {
                 SELECT subject AS name, created_at FROM knowledge_graph
                 UNION ALL
                 SELECT object AS name, created_at FROM knowledge_graph
-            ) ORDER BY created_at DESC LIMIT ?1"
+            ) ORDER BY created_at DESC LIMIT ?1",
         )?;
 
         let entities = stmt
@@ -375,14 +382,15 @@ impl MemoryStore for SqliteStore {
         // Tag filtering: check if any filter tag is contained in the JSON array
         for tag in filter_tags {
             sql.push_str(" AND tags LIKE ?");
-            param_values.push(Box::new(format!("%\"{}\"%" , tag)));
+            param_values.push(Box::new(format!("%\"{}\"%", tag)));
         }
 
         sql.push_str(" ORDER BY importance DESC, created_at DESC LIMIT ?");
         param_values.push(Box::new(limit as i64));
 
         let mut stmt = conn.prepare(&sql)?;
-        let params_ref: Vec<&dyn rusqlite::types::ToSql> = param_values.iter().map(|b| b.as_ref()).collect();
+        let params_ref: Vec<&dyn rusqlite::types::ToSql> =
+            param_values.iter().map(|b| b.as_ref()).collect();
         let records = stmt
             .query_map(params_ref.as_slice(), Self::row_to_record)?
             .filter_map(|r| r.ok())
@@ -401,12 +409,11 @@ impl MemoryStore for SqliteStore {
         )?;
         let total = total as usize;
 
-        let avg_importance: f64 = conn
-            .query_row(
-                "SELECT COALESCE(AVG(importance), 0.0) FROM memories WHERE archived = 0",
-                [],
-                |row| row.get(0),
-            )?;
+        let avg_importance: f64 = conn.query_row(
+            "SELECT COALESCE(AVG(importance), 0.0) FROM memories WHERE archived = 0",
+            [],
+            |row| row.get(0),
+        )?;
 
         let mut by_type = HashMap::new();
         let mut stmt = conn.prepare(

@@ -6,14 +6,11 @@
 //! 3. Detect contradictions with existing memories
 //! 4. Update the knowledge graph
 
-use crate::memory::types::{
-    ConsolidationReport, KnowledgeGraphUpdate, MemoryRecord, MemoryType,
-};
+use crate::memory::types::{ConsolidationReport, KnowledgeGraphUpdate, MemoryRecord, MemoryType};
 use crate::providers::{EmbeddingProvider, Provider};
 use crate::storage::sqlite::SqliteStore;
 use crate::storage::vector::VectorIndex;
 use crate::storage::MemoryStore;
-
 
 /// Run a consolidation pass over a session's memories.
 pub async fn consolidate_session(
@@ -55,7 +52,7 @@ pub async fn consolidate_session(
     // Step 1b: Resolve entities in Knowledge Graph triples
     let resolver = super::resolution::LlmEntityResolver::new(provider, model.to_string(), store);
     use super::resolution::EntityResolver;
-    
+
     // Collect all triples from facts
     let mut triples = Vec::new();
     for f in &facts {
@@ -77,9 +74,10 @@ pub async fn consolidate_session(
     }
 
     // Step 2: Check for contradictions with existing memories
-    let contradictions =
-        super::contradiction::detect_contradictions(provider, embeddings, index, store, &facts, model)
-            .await?;
+    let contradictions = super::contradiction::detect_contradictions(
+        provider, embeddings, index, store, &facts, model,
+    )
+    .await?;
 
     // Auto-resolve contradictions by archiving the old superseded memories
     for c in &contradictions {

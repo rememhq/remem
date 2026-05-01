@@ -133,7 +133,10 @@ async fn test_knowledge_graph_insert() {
         predicate: "lives_in".to_string(),
         object: "Berlin".to_string(),
     };
-    store.insert_knowledge_triple(&triple, memory_id).await.unwrap();
+    store
+        .insert_knowledge_triple(&triple, memory_id)
+        .await
+        .unwrap();
 
     // Inserting same triple again should not fail (INSERT OR IGNORE)
     let result = store.insert_knowledge_triple(&triple, memory_id).await;

@@ -11,7 +11,6 @@ use crate::storage::vector::VectorIndex;
 use crate::storage::MemoryStore;
 use chrono::{DateTime, Utc};
 
-
 /// Perform guided retrieval: vector search → LLM re-ranking → reasoning traces.
 #[allow(clippy::too_many_arguments)]
 pub async fn guided_retrieval(
@@ -53,9 +52,7 @@ pub async fn guided_retrieval(
                     continue;
                 }
             }
-            if !filter_tags.is_empty()
-                && !filter_tags.iter().any(|t| record.tags.contains(t))
-            {
+            if !filter_tags.is_empty() && !filter_tags.iter().any(|t| record.tags.contains(t)) {
                 continue;
             }
 

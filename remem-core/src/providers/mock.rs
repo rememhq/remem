@@ -1,5 +1,5 @@
+use crate::providers::{EmbeddingProvider, Provider};
 use async_trait::async_trait;
-use crate::providers::{Provider, EmbeddingProvider};
 
 pub struct MockProvider;
 
@@ -16,9 +16,10 @@ impl Provider for MockProvider {
             if prompt.contains("To bake a cake") {
                 return Ok(r#"FACT | procedure | 7 | baking | First, preheat the oven
 TRIPLE | First, preheat the oven | next_step | Then, mix the batter
-FACT | procedure | 7 | baking | Then, mix the batter"#.to_string());
+FACT | procedure | 7 | baking | Then, mix the batter"#
+                    .to_string());
             }
-            return Ok(r#"FACT | fact | 8 | rust | Alice likes Rust"# .to_string());
+            return Ok(r#"FACT | fact | 8 | rust | Alice likes Rust"#.to_string());
         }
         if prompt.contains("entity resolution engine") {
             if prompt.contains("Postgres") && prompt.contains("PostgreSQL") {

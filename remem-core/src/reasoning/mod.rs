@@ -5,9 +5,9 @@
 
 pub mod consolidation;
 pub mod contradiction;
+pub mod resolution;
 pub mod retrieval;
 pub mod scoring;
-pub mod resolution;
 
 use crate::config::RememConfig;
 use crate::memory::types::{KnowledgeGraphUpdate, MemoryRecord, MemoryResult};
@@ -145,9 +145,7 @@ impl ReasoningEngine {
         // Add FTS results that weren't in vector results
         for record in &fts_results {
             if seen.insert(record.id) {
-                if !filter_tags.is_empty()
-                    && !filter_tags.iter().any(|t| record.tags.contains(t))
-                {
+                if !filter_tags.is_empty() && !filter_tags.iter().any(|t| record.tags.contains(t)) {
                     continue;
                 }
                 results.push(MemoryResult::from(record.clone()));
@@ -159,7 +157,10 @@ impl ReasoningEngine {
     }
 
     /// Search the knowledge graph for a specific entity.
-    pub async fn get_entity_context(&self, entity: &str) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
+    pub async fn get_entity_context(
+        &self,
+        entity: &str,
+    ) -> anyhow::Result<Vec<KnowledgeGraphUpdate>> {
         self.store.get_knowledge_for_entity(entity).await
     }
 

@@ -92,9 +92,15 @@ struct ConsolidateBody {
     model: Option<String>,
 }
 
-fn default_8() -> usize { 8 }
-fn default_20() -> usize { 20 }
-fn default_delete() -> String { "delete".into() }
+fn default_8() -> usize {
+    8
+}
+fn default_20() -> usize {
+    20
+}
+fn default_delete() -> String {
+    "delete".into()
+}
 
 // --- Auth middleware ---
 
@@ -128,8 +134,7 @@ async fn store_memory(
     check_auth(&headers)?;
 
     let auto_score = req.importance.is_none();
-    let mut record = MemoryRecord::new(&req.content, req.memory_type)
-        .with_tags(req.tags);
+    let mut record = MemoryRecord::new(&req.content, req.memory_type).with_tags(req.tags);
 
     if let Some(imp) = req.importance {
         record = record.with_importance(imp);
@@ -275,7 +280,8 @@ async fn forget_memory(
         )
     })?;
 
-    let mode: ForgetMode = serde_json::from_value(serde_json::json!(q.mode)).unwrap_or(ForgetMode::Delete);
+    let mode: ForgetMode =
+        serde_json::from_value(serde_json::json!(q.mode)).unwrap_or(ForgetMode::Delete);
 
     let success = engine.forget(id, mode).await.map_err(|e| {
         (
@@ -360,21 +366,30 @@ async fn main() -> anyhow::Result<()> {
     let embedding_provider_name = std::env::var("REMEM_EMBEDDING_PROVIDER")
         .unwrap_or_else(|_| config.reasoning.provider.clone());
 
-    let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> = match embedding_provider_name.as_str() {
-        "google" => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
-        "mock" => Arc::new(remem_core::providers::mock::MockEmbeddings::new(768)),
-        "local" => {
-            let model_path = std::env::var("REMEM_LOCAL_MODEL_PATH").unwrap_or_else(|_| "models/nomic-embed-text.onnx".to_string());
-            let vocab_path = std::env::var("REMEM_LOCAL_VOCAB_PATH").unwrap_or_else(|_| "models/vocab.txt".to_string());
-            Arc::new(remem_core::providers::local::LocalEmbeddings::new(&model_path, &vocab_path)?)
-        },
-        _ => match std::env::var("GOOGLE_API_KEY") {
-            Ok(_) => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
-            Err(_) => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),
-        }
-    };
+    let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> =
+        match embedding_provider_name.as_str() {
+            "google" => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
+            "mock" => Arc::new(remem_core::providers::mock::MockEmbeddings::new(768)),
+            "local" => {
+                let model_path = std::env::var("REMEM_LOCAL_MODEL_PATH")
+                    .unwrap_or_else(|_| "models/nomic-embed-text.onnx".to_string());
+                let vocab_path = std::env::var("REMEM_LOCAL_VOCAB_PATH")
+                    .unwrap_or_else(|_| "models/vocab.txt".to_string());
+                Arc::new(remem_core::providers::local::LocalEmbeddings::new(
+                    &model_path,
+                    &vocab_path,
+                )?)
+            }
+            _ => match std::env::var("GOOGLE_API_KEY") {
+                Ok(_) => Arc::new(remem_core::providers::google::GoogleEmbeddings::new(None)?),
+                Err(_) => Arc::new(OpenAIEmbeddings::new(None, Some(768))?),
+            },
+        };
 
-    tracing::info!("Initializing ReasoningEngine with project: {}", args.project);
+    tracing::info!(
+        "Initializing ReasoningEngine with project: {}",
+        args.project
+    );
     tracing::info!("Using reasoning provider: {}", reasoning_provider_name);
     tracing::info!("Using embedding provider: {}", embedding_provider_name);
     let engine = Arc::new(ReasoningEngine::new(

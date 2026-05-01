@@ -1,5 +1,5 @@
 use crate::memory::types::Contradiction;
-use crate::providers::{Provider, EmbeddingProvider};
+use crate::providers::{EmbeddingProvider, Provider};
 use crate::storage::vector::VectorIndex;
 use crate::storage::MemoryStore;
 
@@ -74,7 +74,10 @@ If no contradiction exists, output: NONE"#,
             if line.starts_with("CONTRADICTION |") {
                 let parts: Vec<&str> = line.splitn(3, '|').collect();
                 if parts.len() == 3 {
-                    let cand_idx_str = parts[1].trim().trim_start_matches("[CANDIDATE-").trim_end_matches(']');
+                    let cand_idx_str = parts[1]
+                        .trim()
+                        .trim_start_matches("[CANDIDATE-")
+                        .trim_end_matches(']');
                     if let Ok(cand_idx) = cand_idx_str.parse::<usize>() {
                         if cand_idx >= 1 && cand_idx <= candidates.len() {
                             let existing = &candidates[cand_idx - 1];

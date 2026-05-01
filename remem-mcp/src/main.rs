@@ -11,7 +11,6 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tracing;
 
 use remem_core::config::RememConfig;
 use remem_core::providers::anthropic::AnthropicProvider;
@@ -99,19 +98,19 @@ async fn main() -> anyhow::Result<()> {
     let _ = index.load(&config.index_path()).await;
 
     // Create provider based on config
-    let provider: Arc<dyn remem_core::providers::Provider> = match config.reasoning.provider.as_str()
-    {
-        "openai" => Arc::new(OpenAIProvider::new(None)?),
-        "google" => Arc::new(GoogleProvider::new(None)?),
-        "mock" => Arc::new(remem_core::providers::mock::MockProvider),
-        _ => {
-            // Default to anthropic; if key not set, try openai
-            match AnthropicProvider::new(None) {
-                Ok(p) => Arc::new(p),
-                Err(_) => Arc::new(OpenAIProvider::new(None)?),
+    let provider: Arc<dyn remem_core::providers::Provider> =
+        match config.reasoning.provider.as_str() {
+            "openai" => Arc::new(OpenAIProvider::new(None)?),
+            "google" => Arc::new(GoogleProvider::new(None)?),
+            "mock" => Arc::new(remem_core::providers::mock::MockProvider),
+            _ => {
+                // Default to anthropic; if key not set, try openai
+                match AnthropicProvider::new(None) {
+                    Ok(p) => Arc::new(p),
+                    Err(_) => Arc::new(OpenAIProvider::new(None)?),
+                }
             }
-        }
-    };
+        };
 
     // Embedding provider (Google, OpenAI, or Local)
     let embeddings: Arc<dyn remem_core::providers::EmbeddingProvider> =
@@ -174,10 +173,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn handle_request(
-    engine: &Arc<ReasoningEngine>,
-    request: JsonRpcRequest,
-) -> JsonRpcResponse {
+async fn handle_request(engine: &Arc<ReasoningEngine>, request: JsonRpcRequest) -> JsonRpcResponse {
     let id = request.id.unwrap_or(serde_json::Value::Null);
 
     match request.method.as_str() {

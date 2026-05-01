@@ -2,10 +2,10 @@
 
 pub mod anthropic;
 pub mod embeddings;
-pub mod openai;
 pub mod google;
-pub mod mock;
 pub mod local;
+pub mod mock;
+pub mod openai;
 
 use async_trait::async_trait;
 
