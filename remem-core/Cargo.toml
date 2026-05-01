@@ -21,6 +21,9 @@ toml = { workspace = true }
 dirs = { workspace = true }
 ndarray = { workspace = true }
 
+[build-dependencies]
+cc = { workspace = true }
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }
 tempfile = "3"

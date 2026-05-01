@@ -17,7 +17,7 @@ pub async fn guided_retrieval(
     provider: &dyn Provider,
     embeddings: &dyn EmbeddingProvider,
     store: &SqliteStore,
-    index: &VectorIndex,
+    index: &dyn VectorIndex,
     query: &str,
     limit: usize,
     filter_tags: &[String],
@@ -29,7 +29,7 @@ pub async fn guided_retrieval(
     let query_embedding = embeddings.embed(query).await?;
 
     // Step 2: Get top-50 candidates from vector index
-    let candidate_count = 50.min(index.len().await);
+    let candidate_count = 50.min(index.len());
     if candidate_count == 0 {
         return Ok(Vec::new());
     }

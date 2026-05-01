@@ -11,6 +11,6 @@
   "keywords": ["ai", "memory", "agents", "llm", "reasoning"],
   "license": "Apache-2.0",
   "devDependencies": {
-    "typescript": "^5.5"
+    "typescript": "^6.0.3"
   }
 }

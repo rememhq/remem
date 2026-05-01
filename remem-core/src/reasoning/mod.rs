@@ -22,7 +22,7 @@ pub struct ReasoningEngine {
     pub provider: Arc<dyn Provider>,
     pub embeddings: Arc<dyn EmbeddingProvider>,
     pub store: Arc<SqliteStore>,
-    pub index: Arc<VectorIndex>,
+    pub index: Arc<dyn VectorIndex>,
 }
 
 impl ReasoningEngine {
@@ -32,7 +32,7 @@ impl ReasoningEngine {
         provider: Arc<dyn Provider>,
         embeddings: Arc<dyn EmbeddingProvider>,
         store: Arc<SqliteStore>,
-        index: Arc<VectorIndex>,
+        index: Arc<dyn VectorIndex>,
     ) -> Self {
         Self {
             config,
@@ -68,7 +68,7 @@ impl ReasoningEngine {
         self.store.insert(&record).await?;
 
         // Add to vector index
-        self.index.add(record.id, embedding).await?;
+        self.index.add(record.id, &embedding).await?;
 
         tracing::info!(
             id = %record.id,
@@ -93,7 +93,7 @@ impl ReasoningEngine {
             &*self.provider,
             &*self.embeddings,
             &self.store,
-            &self.index,
+            self.index.as_ref(),
             query,
             limit,
             filter_tags,
@@ -176,7 +176,7 @@ impl ReasoningEngine {
             // Re-embed if content changed
             let embedding = self.embeddings.embed(&record.content).await?;
             record.embedding = Some(embedding.clone());
-            self.index.add(record.id, embedding).await?;
+            self.index.add(record.id, &embedding).await?;
         }
 
         if let Some(new_importance) = importance {
@@ -201,7 +201,7 @@ impl ReasoningEngine {
     ) -> anyhow::Result<bool> {
         match mode {
             crate::memory::types::ForgetMode::Delete => {
-                self.index.remove(id).await;
+                let _ = self.index.remove(id).await;
                 self.store.delete(id).await
             }
             crate::memory::types::ForgetMode::Archive => self.store.archive(id).await,

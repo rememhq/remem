@@ -20,7 +20,7 @@ pub async fn consolidate_session(
     provider: &dyn Provider,
     embeddings: &dyn EmbeddingProvider,
     store: &SqliteStore,
-    index: &VectorIndex,
+    index: &dyn VectorIndex,
     session_id: &str,
     model: &str,
 ) -> anyhow::Result<ConsolidationReport> {
@@ -96,7 +96,7 @@ pub async fn consolidate_session(
                     updated.importance = record.importance.max(updated.importance);
                     updated.updated_at = chrono::Utc::now();
                     store.update(&updated).await?;
-                    index.add(updated.id, embedding.clone()).await?;
+                    index.add(updated.id, &embedding).await?;
                     updated_count += 1;
                     is_update = true;
                     break;
@@ -106,7 +106,7 @@ pub async fn consolidate_session(
 
         if !is_update {
             store.insert(&record).await?;
-            index.add(record.id, embedding).await?;
+            index.add(record.id, &embedding).await?;
             new_count += 1;
         }
 

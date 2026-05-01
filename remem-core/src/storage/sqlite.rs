@@ -317,11 +317,12 @@ impl MemoryStore for SqliteStore {
     async fn stats(&self) -> anyhow::Result<StoreStats> {
         let conn = self.conn.lock().await;
 
-        let total: usize = conn.query_row(
+        let total: i64 = conn.query_row(
             "SELECT COUNT(*) FROM memories WHERE archived = 0",
             [],
             |row| row.get(0),
         )?;
+        let total = total as usize;
 
         let avg_importance: f64 = conn
             .query_row(
@@ -335,7 +336,7 @@ impl MemoryStore for SqliteStore {
             "SELECT memory_type, COUNT(*) FROM memories WHERE archived = 0 GROUP BY memory_type",
         )?;
         let rows = stmt.query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, usize>(1)?))
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)? as usize))
         })?;
         for row in rows {
             if let Ok((k, v)) = row {
