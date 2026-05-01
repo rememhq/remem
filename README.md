@@ -1,14 +1,12 @@
 # remem
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/rememhq/remem/main/assets/logo.png" alt="remem logo" width="200" />
-  <p><strong>The reasoning memory layer for AI agents.</strong></p>
-  <p>
-    <a href="https://github.com/rememhq/remem/actions"><img src="https://github.com/rememhq/remem/workflows/CI/badge.svg" alt="CI Status" /></a>
-    <a href="https://github.com/rememhq/remem/releases"><img src="https://img.shields.io/github/v/release/rememhq/remem" alt="Release" /></a>
-    <a href="https://apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License" /></a>
-  </p>
-</div>
+**The reasoning memory layer for AI agents.**
+
+<p align="left">
+  <a href="https://github.com/rememhq/remem/actions"><img src="https://github.com/rememhq/remem/workflows/CI/badge.svg" alt="CI Status" /></a>
+  <a href="https://github.com/rememhq/remem/releases"><img src="https://img.shields.io/github/v/release/rememhq/remem" alt="Release" /></a>
+  <a href="https://apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License" /></a>
+</p>
 
 ---
 
@@ -16,25 +14,25 @@
 
 remem provides agents with **persistent, reasoned memory** that spans across sessions. Unlike traditional vector stores that rely solely on semantic similarity, remem incorporates an LLM reasoning step at every stage of the memory lifecycle: from initial importance scoring and guided retrieval to session-wide consolidation and contradiction detection.
 
-## 🏗️ Layer Diagram
+## 🏗️ Architecture
 
 ```mermaid
 graph TD
-    subgraph Consumers
+    subgraph Consumers [Consumers]
         CC[Claude Code]
         CR[Cursor]
         PY[Python Agents]
         TS[TS Agents]
     end
 
-    subgraph Interface ["Interface Layer (Rust)"]
-        MCP[remem-mcp (stdio)]
-        API[remem-api (REST)]
+    subgraph Interface [Interface Layer]
+        MCP[remem-mcp - stdio]
+        API[remem-api - REST]
         SDK_PY[Python SDK]
         SDK_TS[TS SDK]
     end
 
-    subgraph Core ["Reasoning Engine (remem-core)"]
+    subgraph Core [Reasoning Engine - remem-core]
         CONS[Consolidation]
         RETR[Guided Retrieval]
         CONT[Contradiction Detection]
@@ -42,14 +40,14 @@ graph TD
         KG[Knowledge Graph Engine]
     end
 
-    subgraph Models ["Models & Providers"]
+    subgraph Models [Models & Providers]
         CLD[Anthropic Claude]
         GPT[OpenAI GPT-4o]
         GEM[Google Gemini]
-        ONNX[Local ONNX / libremem]
+        ONNX[Local ONNX - libremem]
     end
 
-    subgraph Storage ["Storage Layer"]
+    subgraph Storage [Storage Layer]
         SQL[SQLite + WAL]
         HNSW[HNSW Vector Index]
     end
