@@ -62,7 +62,7 @@ utoipa-axum = "0.2"
 rmcp = { version = "0.1", features = ["server", "transport-io"] }
 
 # Vector math
-ndarray = "0.16"
+ndarray = "0.17"
 
 # Internal crates
 remem-core = { path = "remem-core" }
