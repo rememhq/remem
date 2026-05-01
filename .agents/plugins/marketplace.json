@@ -1,0 +1,28 @@
+{
+  "name": "remem-agent-plugins",
+  "version": "1.0.0",
+  "description": "Agent plugins and context rules for the remem project",
+  "plugins": [
+    {
+      "id": "remem-rust",
+      "name": "Rust Core Development",
+      "description": "Rust-specific coding patterns for remem-core, remem-api, and remem-cli",
+      "file": "remem-rust.md",
+      "tags": ["rust", "backend", "core"]
+    },
+    {
+      "id": "remem-ffi",
+      "name": "C++ FFI Bridge Rules",
+      "description": "Rules and safety boundaries for modifying the FFI bridge and C++ ONNX engine",
+      "file": "remem-ffi.md",
+      "tags": ["cpp", "ffi", "integration"]
+    },
+    {
+      "id": "remem-testing",
+      "name": "Testing Conventions",
+      "description": "Testing conventions across Rust, Python, and TypeScript SDKs",
+      "file": "remem-testing.md",
+      "tags": ["testing", "qa", "rust", "python", "typescript"]
+    }
+  ]
+}
